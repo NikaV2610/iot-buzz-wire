@@ -1,0 +1,4 @@
+## Diese Datei gehört nach main/idf_component.yml
+dependencies:
+  espressif/led_strip: "^2.5.0"
+  abobija/rc522: "^3.0.0"
