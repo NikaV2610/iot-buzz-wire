@@ -1,0 +1,14 @@
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ServiceDefaults\bin\Debug\net10.0\Hotwire.Web.ServiceDefaults.deps.json
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ServiceDefaults\bin\Debug\net10.0\Hotwire.Web.ServiceDefaults.dll
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ServiceDefaults\bin\Debug\net10.0\Hotwire.Web.ServiceDefaults.pdb
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ServiceDefaults\obj\Debug\net10.0\Hotwire.Web.ServiceDefaults.csproj.AssemblyReference.cache
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ServiceDefaults\obj\Debug\net10.0\Hotwire.Web.ServiceDefaults.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ServiceDefaults\obj\Debug\net10.0\Hotwire.Web.ServiceDefaults.AssemblyInfoInputs.cache
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ServiceDefaults\obj\Debug\net10.0\Hotwire.Web.ServiceDefaults.AssemblyInfo.cs
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ServiceDefaults\obj\Debug\net10.0\Hotwire.Web.ServiceDefaults.csproj.CoreCompileInputs.cache
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ServiceDefaults\obj\Debug\net10.0\Hotwire.Web.ServiceDefaults.sourcelink.json
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ServiceDefaults\obj\Debug\net10.0\Hotwire.Web.ServiceDefaults.dll
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ServiceDefaults\obj\Debug\net10.0\refint\Hotwire.Web.ServiceDefaults.dll
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ServiceDefaults\obj\Debug\net10.0\Hotwire.Web.ServiceDefaults.pdb
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ServiceDefaults\obj\Debug\net10.0\ref\Hotwire.Web.ServiceDefaults.dll
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ServiceDefaults\obj\Debug\net10.0\Hotwire..BE0E04A1.Up2Date

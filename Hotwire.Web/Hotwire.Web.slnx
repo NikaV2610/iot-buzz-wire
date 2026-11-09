@@ -1,0 +1,29 @@
+<Solution>
+  <Folder Name="/Components/" />
+  <Folder Name="/Components/Pages/">
+    <File Path="Components/Pages/Dashboard.razor" />
+    <File Path="Components/Pages/Players.razor" />
+    <File Path="Components/Pages/Scoreboard.razor" />
+  </Folder>
+  <Folder Name="/Components/Shared/">
+    <File Path="Components/Shared/CurrentRun.razor" />
+    <File Path="Components/Shared/PlayerRegistration.razor" />
+    <File Path="Components/Shared/TrackVisualization.razor" />
+  </Folder>
+  <Folder Name="/Data/">
+    <File Path="Data/GameDbContext.cs" />
+  </Folder>
+  <Folder Name="/Hubs/">
+    <File Path="Hubs/GameHub.cs" />
+  </Folder>
+  <Folder Name="/Models/">
+    <File Path="Models/GameRun.cs" />
+    <File Path="Models/Player.cs" />
+    <File Path="Models/PositionData.cs" />
+  </Folder>
+  <Folder Name="/Services/" />
+  <Project Path="Hotwire.Web.ApiService/Hotwire.Web.ApiService.csproj" />
+  <Project Path="Hotwire.Web.AppHost/Hotwire.Web.AppHost.csproj" />
+  <Project Path="Hotwire.Web.ServiceDefaults/Hotwire.Web.ServiceDefaults.csproj" />
+  <Project Path="Hotwire.Web.Web/Hotwire.Web.Web.csproj" />
+</Solution>

@@ -1,0 +1,17 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AspireUseCliBundle>true</AspireUseCliBundle>
+    <UserSecretsId>fca6ada1-c9da-4fcf-acc3-4eb6aa7a049b</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hotwire.Web.ApiService\Hotwire.Web.ApiService.csproj" />
+    <ProjectReference Include="..\Hotwire.Web.Web\Hotwire.Web.Web.csproj" />
+  </ItemGroup>
+
+</Project>

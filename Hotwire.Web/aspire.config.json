@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "Hotwire.Web.AppHost/Hotwire.Web.AppHost.csproj"
+  }
+}
