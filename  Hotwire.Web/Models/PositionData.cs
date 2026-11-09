@@ -1,5 +1,7 @@
 using System;
 
+namespace Hotwire.Web.Models;
+
 public class PositionData
 {
     public int X { get; set; }

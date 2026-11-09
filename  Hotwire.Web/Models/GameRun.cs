@@ -1,5 +1,7 @@
 using System;
 
+namespace Hotwire.Web.Models;
+
 public class GameRun
 {
     public int Id { get; set; }
