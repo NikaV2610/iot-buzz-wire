@@ -11,4 +11,5 @@ public class Player
     public string LastName { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
 }

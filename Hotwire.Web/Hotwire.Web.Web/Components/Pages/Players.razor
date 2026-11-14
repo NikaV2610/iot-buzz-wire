@@ -1,0 +1,119 @@
+@page "/players"
+
+@inject IDbContextFactory<GameDbContext> DbFactory
+
+@using Hotwire.Web.Web.Data
+@using Hotwire.Web.Web.Models
+@using Microsoft.EntityFrameworkCore
+@using System.ComponentModel.DataAnnotations
+
+<h1>Players</h1>
+
+@if (!string.IsNullOrWhiteSpace(Message))
+{
+	<p>@Message</p>
+}
+
+<h3>Add new player</h3>
+
+<EditForm Model="@NewPlayer" OnValidSubmit="@CreatePlayerAsync">
+	<DataAnnotationsValidator />
+	<ValidationSummary />
+
+	<div class="mb-2">
+		<label>First Name</label>
+        <InputText class="form-control" @bind-Value="NewPlayer.FirstName" />
+	</div>
+
+	<div class="mb-2">
+		<label>Last Name</label>
+		<InputText class="form-control" @bind-Value="NewPlayer.LastName"/>
+	</div>
+
+	<div class="mb-2">
+		<label>RFID</label>
+        <InputText class="form-control" @bind-Value="NewPlayer.RfidTag"/>
+	</div>
+
+	<button class="btn btn-primary" type="submit">Save</button>
+</EditForm>
+
+<hr />
+
+<h3>List</h3>
+
+@if (AllPlayers.Count == 0)
+{
+	<p>No player entries</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>RFID</th>
+                <th>CreatedAt</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in AllPlayers)
+            {
+                <tr>
+                    <td>@p.Id</td>
+                    <td>@p.FirstName @p.LastName</td>
+                    <td>@p.RfidTag</td>
+                    <td>@p.CreatedAt</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Player> AllPlayers = [];
+    private Player NewPlayer = new()
+    {
+        FirstName = "",
+        LastName = "",
+        RfidTag = "",
+        CreatedAt = DateTime.UtcNow
+    };
+
+    private string? Message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPlayersAsync();
+    }
+
+    private async Task LoadPlayersAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        AllPlayers = await db.Players
+            .OrderByDescending(p => p.Id)
+            .ToListAsync();
+    }
+
+    private async Task CreatePlayerAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        NewPlayer.CreatedAt = DateTime.UtcNow;
+        db.Players.Add(NewPlayer);
+        await db.SaveChangesAsync();
+
+        Message = "Spieler gespeichert.";
+
+        NewPlayer = new Player
+        {
+            FirstName = "",
+            LastName = "",
+            RfidTag = "",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await LoadPlayersAsync();
+    }
+}
