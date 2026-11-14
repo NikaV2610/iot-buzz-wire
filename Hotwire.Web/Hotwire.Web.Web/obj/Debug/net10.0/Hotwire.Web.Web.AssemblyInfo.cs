@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Hotwire.Web.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+be0417f39b4965876db196c4f4e1c38938e5c892")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1bd73076000e2a77c7f33ace1403cd305c33624b")]
 [assembly: System.Reflection.AssemblyProductAttribute("Hotwire.Web.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Hotwire.Web.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

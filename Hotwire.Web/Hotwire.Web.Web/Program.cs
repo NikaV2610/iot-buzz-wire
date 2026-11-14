@@ -1,5 +1,7 @@
 using Hotwire.Web.Web;
 using Hotwire.Web.Web.Components;
+using Hotwire.Web.Web.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,9 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddOutputCache();
+
+builder.Services.AddDbContextFactory<GameDbContext>(options =>
+    options.UseSqlite("Data Source=hotwire.db"));
 
 builder.Services.AddHttpClient<WeatherApiClient>(client =>
     {

@@ -1,0 +1,131 @@
+@page "/debug-db"
+@using Hotwire.Web.Web.Data
+@using Hotwire.Web.Web.Models
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<GameDbContext> DbFactory
+
+<PageTitle>Debug DB</PageTitle>
+
+<h1>Debug DB</h1>
+
+<div class="mb-3 d-flex gap-2">
+	<button class="btn btn-primary" @onclick="ReloadAsync">Neu laden</button>
+	<button class="btn btn-secondary" @onclick="AddSamplePlayerAsync">Test-Spieler hinzufügen</button>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(StatusMessage))
+{
+	<div class="alert alert-info">@StatusMessage</div>
+}
+
+<h3>Players (@Players.Count)</h3>
+@if (Players.Count == 0)
+{
+	<p>Keine Spieler vorhanden.</p>
+}
+else
+{
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>RFID</th>
+				<th>Vorname</th>
+				<th>Nachname</th>
+				<th>CreatedAt (UTC)</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var p in Players)
+			{
+				<tr>
+					<td>@p.Id</td>
+					<td>@p.RfidTag</td>
+					<td>@p.FirstName</td>
+					<td>@p.LastName</td>
+					<td>@p.CreatedAt.ToString("u")</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+
+<h3>Game Runs (@Runs.Count)</h3>
+@if (Runs.Count == 0)
+{
+	<p>Keine Runs vorhanden.</p>
+}
+else
+{
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>PlayerId</th>
+				<th>Start</th>
+				<th>Ende</th>
+				<th>Dauer</th>
+				<th>Kollisionen</th>
+				<th>Completed</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var r in Runs)
+			{
+				<tr>
+					<td>@r.Id</td>
+					<td>@r.PlayerId</td>
+					<td>@r.StartTime.ToString("u")</td>
+					<td>@(r.EndTime?.ToString("u") ?? "-")</td>
+					<td>@r.Duration</td>
+					<td>@(r.Collisions?.ToString() ?? "-")</td>
+					<td>@r.Completed</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+
+@code {
+	private List<Player> Players { get; set; } = [];
+	private List<GameRun> Runs { get; set; } = [];
+	private string? StatusMessage;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await ReloadAsync();
+	}
+
+	private async Task ReloadAsync()
+	{
+		await using var db = await DbFactory.CreateDbContextAsync();
+
+		Players = await db.Players
+			.OrderByDescending(p => p.CreatedAt)
+			.ToListAsync();
+
+		Runs = await db.GameRuns
+			.OrderByDescending(r => r.StartTime)
+			.ToListAsync();
+
+		StatusMessage = $"Geladen: {Players.Count} Player, {Runs.Count} Runs";
+	}
+
+	private async Task AddSamplePlayerAsync()
+	{
+		var randomSuffix = Guid.NewGuid().ToString("N")[..8];
+
+		await using var db = await DbFactory.CreateDbContextAsync();
+		db.Players.Add(new Player
+		{
+			FirstName = "Test",
+			LastName = randomSuffix,
+			RfidTag = $"RFID-{randomSuffix}",
+			CreatedAt = DateTime.UtcNow
+		});
+
+		await db.SaveChangesAsync();
+		await ReloadAsync();
+		StatusMessage = "Test-Spieler wurde angelegt.";
+	}
+}

@@ -77,5 +77,30 @@
     "C:\\Users\\arian\\.nuget\\packages\\system.io.hashing\\10.0.12\\system.io.hashing.10.0.12.nupkg.sha512",
     "C:\\Users\\arian\\.nuget\\packages\\yamldotnet\\18.1.0\\yamldotnet.18.1.0.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Aspire.Hosting' 13.6.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-f7vh-h5g3-7jrh",
+      "projectPath": "C:\\Users\\arian\\source\\repos\\iot-buzz-wire\\Hotwire.Web\\Hotwire.Web.AppHost\\Hotwire.Web.AppHost.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\arian\\source\\repos\\iot-buzz-wire\\Hotwire.Web\\Hotwire.Web.AppHost\\Hotwire.Web.AppHost.csproj",
+      "libraryId": "Aspire.Hosting",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Aspire.Hosting.AppHost' 13.6.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-f7vh-h5g3-7jrh",
+      "projectPath": "C:\\Users\\arian\\source\\repos\\iot-buzz-wire\\Hotwire.Web\\Hotwire.Web.AppHost\\Hotwire.Web.AppHost.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\arian\\source\\repos\\iot-buzz-wire\\Hotwire.Web\\Hotwire.Web.AppHost\\Hotwire.Web.AppHost.csproj",
+      "libraryId": "Aspire.Hosting.AppHost",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
 }

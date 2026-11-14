@@ -4120,5 +4120,27 @@
         }
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'Aspire.Hosting' 13.6.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-f7vh-h5g3-7jrh",
+      "libraryId": "Aspire.Hosting",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'Aspire.Hosting.AppHost' 13.6.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-f7vh-h5g3-7jrh",
+      "libraryId": "Aspire.Hosting.AppHost",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
 }
