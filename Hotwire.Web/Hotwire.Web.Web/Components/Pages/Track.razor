@@ -1,0 +1,104 @@
+﻿@page "/track"
+
+@inject IDbContextFactory<GameDbContext> DbFactory
+@inject IWebHostEnvironment Env
+
+@using Hotwire.Web.Web.Data
+@using Hotwire.Web.Web.Models
+@using Microsoft.EntityFrameworkCore
+@using System.Text.Json
+
+<h1>Track</h1>
+
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+	<div class="alert alert-danger">@ErrorMessage</div>
+}
+else if (Calibration is null)
+{
+	<p>Load Calibrationdata ...</p>
+}
+else
+{
+	<div> class="alert alert-success"
+		Datai geladen
+	</div>
+
+	<p><strong>Track:</strong> @Calibration.TrackName</p>
+	<p><strong>Points</strong> @Calibration.Points.Count</p>
+
+	@if (Calibration.Points.Count > 1)
+	{
+		<p><strong>First timestamp:</strong> @Calibration.Points.First().Timestamp.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss.fff 'UTC'")</p>
+		<p><strong>Last timestamp:</strong> @Calibration.Points.Last().Timestamp.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss.fff 'UTC'")</p>
+		
+		<div class=="border rounded p-2 mt-3" style="background:#f8f9fa;">
+			<svg viwBox="0 0 1000 700" style="width:100%; height:70vh;">
+				<polyline points="@PolylinePoints"
+						  fill="none"
+						  stroke="#1b6ec2"
+						  stroke-width="3"
+						  stroke-linejoin="round"
+						  stroke-linecap="round"/>
+			</svg>
+		</div>
+	}
+}
+
+@code {
+	private CalibrationData? Calibration;
+	private string? ErrorMessage;
+	private string PolylinePoints =>
+		Calibration is null
+			? string.Empty
+			: string.Join(" ",
+				Calibration.Points.Select(p => $"{p.X},{p.Y}"));
+
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadCalibrationAsync();
+	}
+
+	private async Task LoadCalibrationAsync()
+	{
+		try
+		{
+			var filePath = Path.Combine(Env.WebRootPath, "data", "calibration.json");
+
+			if (!File.Exists(filePath))
+			{
+				ErrorMessage = $"File not found";
+				return;
+			}
+
+			await using var stream = File.OpenRead(filePath);
+			Calibration = await JsonSerializer.DeserializeAsync<CalibrationData>(stream, new JsonSerializerOptions
+			{
+				PropertyNameCaseInsensitive = true
+			});
+
+			if (Calibration is null)
+			{
+				ErrorMessage = "JSON could not be deserialized";
+			}
+		}
+		catch (Exception ex)
+		{
+			ErrorMessage = $"ERROR: {ex.Message}";
+		}
+	}
+
+	private sealed class CalibrationData
+	{
+		public string TrackName { get; set; } = "";
+		public List<TrackPoint> Points { get; set; } = [];
+	}
+
+	private sealed class TrackPoint
+	{
+		public double X { get; set; }
+		public double Y { get; set; }
+		public DateTime Timestamp { get; set; }
+	}
+}

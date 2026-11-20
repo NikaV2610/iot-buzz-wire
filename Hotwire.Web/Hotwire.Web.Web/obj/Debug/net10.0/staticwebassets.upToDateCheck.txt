@@ -7,6 +7,7 @@ C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\wwwroot\li
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\Components\Layout\NavMenu.razor.js
 C:\Users\arian\.nuget\packages\microsoft.aspnetcore.app.internal.assets\10.0.14\_framework\blazor.server.js
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.js.map
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\wwwroot\data\calibration.json
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.css
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.min.css.map
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\wwwroot\lib\bootstrap\dist\css\bootstrap.min.css
@@ -50,6 +51,7 @@ C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\wwwroot\li
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.css.map
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\wwwroot\lib\bootstrap\dist\js\bootstrap.js.map
 wwwroot\app.css
+wwwroot\data\calibration.json
 wwwroot\favicon.png
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css.map

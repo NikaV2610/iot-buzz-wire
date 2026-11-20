@@ -63,6 +63,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTY29yZWJvYXJkLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/arian/source/repos/iot-buzz-wire/Hotwire.Web/Hotwire.Web.Web/Components/Pages/Track.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xUcmFjay5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/arian/source/repos/iot-buzz-wire/Hotwire.Web/Hotwire.Web.Web/Components/Routes.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSb3V0ZXMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
