@@ -1,0 +1,214 @@
+@page "/debug-runs"
+@using Hotwire.Web.Web.Data
+@using Hotwire.Web.Web.Models
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<GameDbContext> DbFactory
+
+<h1>Debug Runs</h1>
+
+@if (!string.IsNullOrWhiteSpace(Message))
+{
+	<div class="alert alert-info">@Message</div>
+}
+
+<EditForm Model="@NewRun" OnValidSubmit="CreateRunAsync">
+	<DataAnnotationsValidator />
+
+	<div class="row g-3 mb-3">
+		<div class="col-md-4">
+			<label class="form-label">Player</label>
+			<InputSelect class="form-select" @bind-Value="NewRun.PlayerId">
+				<option value="0">-- select player --</option>
+				@foreach (var p in Players)
+				{
+					<option value="@p.Id">@p.FirstName @p.LastName (@(p.IsActive ? "Active" : "Inactive"))</option>
+				}
+			</InputSelect>
+		</div>
+
+		<div class="col-md-4">
+			<label class="form-label">Duration (seconds)</label>
+			<InputNumber class="form-control" @bind-Value="NewRun.DurationSeconds" />
+		</div>
+
+		<div class="col-md-4">
+			<label class="form-label">Collisions</label>
+			<InputNumber class="form-control" @bind-Value="NewRun.Collisions" />
+		</div>
+	</div>
+
+	<div class="form-check mb-3">
+		<InputCheckbox class="form-check-input" id="completedCheck" @bind-Value="NewRun.Completed" />
+		<label class="form-check-label" for="completedCheck">Completed</label>
+	</div>
+
+	<button class="btn btn-primary" type="submit">Create test run</button>
+	<button class="btn btn-warning ms-2" type="button" @onclick="CreateRandomRunsAsync">Create 10 random runs</button>
+	<button class="btn btn-secondary ms-2" type="button" @onclick="LoadDataAsync">Reload</button>
+</EditForm>
+
+<hr />
+
+<h3>Latest runs (@Runs.Count)</h3>
+@if (Runs.Count == 0)
+{
+	<p>No runs yet.</p>
+}
+else
+{
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>PlayerId</th>
+				<th>Start</th>
+				<th>End</th>
+				<th>Duration</th>
+				<th>Collisions</th>
+				<th>Completed</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var r in Runs)
+			{
+				<tr>
+					<td>@r.Id</td>
+					<td>@r.PlayerId</td>
+					<td>@r.StartTime.ToString("u")</td>
+					<td>@(r.EndTime?.ToString("u") ?? "-")</td>
+					<td>@r.Duration</td>
+					<td>@(r.Collisions?.ToString() ?? "-")</td>
+					<td>@r.Completed</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+
+@code {
+	private List<Player> Players = [];
+	private List<GameRun> Runs = [];
+	private string? Message;
+
+	private NewRunInput NewRun = new()
+	{
+		DurationSeconds = 10,
+		Collisions = 0,
+		Completed = true
+	};
+
+	private sealed class NewRunInput
+	{
+		public int PlayerId { get; set; }
+		public double DurationSeconds { get; set; }
+		public int? Collisions { get; set; }
+		public bool Completed { get; set; }
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadDataAsync();
+	}
+
+	private async Task LoadDataAsync()
+	{
+		await using var db = await DbFactory.CreateDbContextAsync();
+
+		Players = await db.Players
+			.OrderBy(p => p.FirstName)
+			.ThenBy(p => p.LastName)
+			.ToListAsync();
+
+		Runs = await db.GameRuns
+			.OrderByDescending(r => r.Id)
+			.Take(25)
+			.ToListAsync();
+	}
+
+	private async Task CreateRunAsync()
+	{
+		if (NewRun.PlayerId <= 0)
+		{
+			Message = "Please select a player.";
+			return;
+		}
+
+		if (NewRun.DurationSeconds <= 0)
+		{
+			Message = "Duration must be greater than 0.";
+			return;
+		}
+
+		var now = DateTime.UtcNow;
+
+		var run = new GameRun
+		{
+			PlayerId = NewRun.PlayerId,
+			Duration = NewRun.DurationSeconds,
+			Collisions = NewRun.Collisions,
+			Completed = NewRun.Completed,
+			StartTime = now.AddSeconds(-NewRun.DurationSeconds),
+			EndTime = NewRun.Completed ? now : null
+		};
+
+		await using var db = await DbFactory.CreateDbContextAsync();
+		db.GameRuns.Add(run);
+		await db.SaveChangesAsync();
+
+		Message = $"Test run created for player #{NewRun.PlayerId}.";
+
+		NewRun = new NewRunInput
+		{
+			PlayerId = NewRun.PlayerId,
+			DurationSeconds = 10,
+			Collisions = 0,
+			Completed = true
+		};
+
+		await LoadDataAsync();
+	}
+
+	private async Task CreateRandomRunsAsync()
+	{
+		await using var db = await DbFactory.CreateDbContextAsync();
+
+		var playerIds = await db.Players
+			.Where(p => p.IsActive)
+			.Select(p => p.Id)
+			.ToListAsync();
+
+		if (playerIds.Count == 0)
+		{
+			Message = "No active players available.";
+			return;
+		}
+
+		var now = DateTime.UtcNow;
+		var runs = new List<GameRun>();
+
+		for (var i = 0; i < 10; i++)
+		{
+			var duration = Math.Round(Random.Shared.NextDouble() * 20 + 5, 3); // 5s - 25s
+			var collisions = Random.Shared.Next(0, 6);
+			var completed = Random.Shared.NextDouble() > 0.1; // mostly completed
+			var end = now.AddSeconds(-i * 5);
+			var start = end.AddSeconds(-duration);
+
+			runs.Add(new GameRun
+			{
+				PlayerId = playerIds[Random.Shared.Next(playerIds.Count)],
+				Duration = duration,
+				Collisions = collisions,
+				Completed = completed,
+				StartTime = start,
+				EndTime = completed ? end : null
+			});
+		}
+
+		db.GameRuns.AddRange(runs);
+		await db.SaveChangesAsync();
+
+		Message = "Created 10 random test runs.";
+		await LoadDataAsync();
+	}
+}
