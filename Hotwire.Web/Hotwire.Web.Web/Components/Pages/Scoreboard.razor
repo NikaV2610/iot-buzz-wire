@@ -1,0 +1,102 @@
+@page "/scoreboard"
+
+@inject IDbContextFactory<GameDbContext> DbFactory
+
+@using Hotwire.Web.Web.Data
+@using Microsoft.EntityFrameworkCore
+
+<h1>Highscores(@Entries.Count)</h1>
+
+@if (Entries.Count == 0)
+{
+	<p>No finished runs</p>
+}
+else
+{
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>#</th>
+				<th>Player</th>
+				<th>Time (s)</th>
+				<th>Collisions</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var e in Entries)
+			{
+				<tr>
+					<td>
+						@if (e.Rank == 1)
+						{
+							<span class="badge text-bg-warning">🥇 1</span>
+						}
+						else if (e.Rank == 2)
+						{
+							<span class="badge text-bg-secondary">🥈 2</span>
+						}
+						else if (e.Rank == 3)
+						{
+							<span class="badge text-bg-dark">🥉 3</span>
+						}
+						else
+						{
+							@e.Rank
+						}
+					</td>
+					<td>@e.PlayerName</td>
+					<td>@e.Duration.ToString("0.000")</td>
+					<td>@(e.Collisions?.ToString() ?? "-")</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+
+@code{
+	private List<HighscoreEntry> Entries = [];
+
+	private sealed class HighscoreEntry
+	{
+		public int Rank { get; set; }
+		public string PlayerName { get; set; } = "";
+		public double Duration { get; set; }
+		public int? Collisions { get; set; }
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadHighscoresAsync();
+	}
+
+	private async Task LoadHighscoresAsync()
+	{
+		await using var db = await DbFactory.CreateDbContextAsync();
+
+		var raw = await db.GameRuns
+			.Where(r => r.Completed)
+			.Join(
+				db.Players,
+				run => run.PlayerId,
+				player => player.Id,
+				(run, player) => new
+				{
+					player.FirstName,
+					player.LastName,
+					run.Duration,
+					run.Collisions
+				})
+			.OrderBy(x => x.Duration)
+			.ToListAsync();
+
+		Entries = raw
+			.Select((x, index) => new HighscoreEntry
+				{
+					Rank = index + 1,
+					PlayerName = $"{x.FirstName} {x.LastName}".Trim(),
+					Duration = x.Duration,
+					Collisions = x.Collisions
+				})
+			.ToList();
+	}
+}

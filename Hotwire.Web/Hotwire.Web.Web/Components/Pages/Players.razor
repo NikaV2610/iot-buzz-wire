@@ -5,14 +5,8 @@
 @using Hotwire.Web.Web.Data
 @using Hotwire.Web.Web.Models
 @using Microsoft.EntityFrameworkCore
-@using System.ComponentModel.DataAnnotations
 
 <h1>Players</h1>
-
-@if (!string.IsNullOrWhiteSpace(Message))
-{
-	<p>@Message</p>
-}
 
 <h3>Add new player</h3>
 
@@ -54,7 +48,8 @@ else
                 <th>Id</th>
                 <th>Name</th>
                 <th>RFID</th>
-                <th>CreatedAt</th>
+                <th>Status</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -64,11 +59,55 @@ else
                     <td>@p.Id</td>
                     <td>@p.FirstName @p.LastName</td>
                     <td>@p.RfidTag</td>
-                    <td>@p.CreatedAt</td>
+                    <td>
+                        @if (p.IsActive)
+                        {
+                            <span class="badge text-bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-secondary">Inactive</span>
+                        }
+                    </td>
+                    <td>
+                        @if (!p.IsActive)
+                        {
+                            <button class="btn btn btn-dark"
+                                    @onclick="() => OpenReactivationPopup(p.Id)">
+                                Reactivate
+                            </button>
+                        }
+                        <button class="btn btn btn-danger"
+                                @onclick="() => DeletePlayerAsync(p.Id)">
+                            Delete
+                        </button>
+                    </td>
                 </tr>
             }
         </tbody>
     </table>
+}
+
+@if (ShowReactivationPopup)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reactivate player</h5>
+                    <button type="button" class="btn-close" @onclick="CloseReactivationPopup"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">New RFID</label>
+                    <InputText class="form-control" @bind-Value="ReactivationRfid" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseReactivationPopup">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="ConfirmReactivationAsync">Reactivate</button>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
@@ -81,7 +120,9 @@ else
         CreatedAt = DateTime.UtcNow
     };
 
-    private string? Message;
+    private bool ShowReactivationPopup;
+    private int? ReactivationPlayerId;
+    private string ReactivationRfid = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -99,13 +140,51 @@ else
     private async Task CreatePlayerAsync()
     {
         await using var db = await DbFactory.CreateDbContextAsync();
+        await using var tx = await db.Database.BeginTransactionAsync();
 
-        NewPlayer.CreatedAt = DateTime.UtcNow;
-        db.Players.Add(NewPlayer);
+        // RFID normalize
+        var normalizedRfid = string.IsNullOrWhiteSpace(NewPlayer.RfidTag)
+            ? null
+            : NewPlayer.RfidTag.Trim();
+
+        // If RFID exist, search old player
+        if (!string.IsNullOrEmpty(normalizedRfid))
+        {
+            var existingOwners = await db.Players
+                .Where(p => p.RfidTag == normalizedRfid)
+                .ToListAsync();
+
+            foreach (var owner in existingOwners)
+            {
+                owner.IsActive = false;
+                owner.DeaktivatedAt = DateTime.UtcNow;
+                owner.RfidTag = null;
+            }
+
+            if (existingOwners.Count > 0)
+            {
+                await db.SaveChangesAsync();
+            }
+        }
+
+        // Aktivate new player
+        var playerToCreate = new Player
+            {
+                FirstName = NewPlayer.FirstName.Trim(),
+                LastName = NewPlayer.LastName.Trim(),
+                RfidTag = normalizedRfid,
+                IsActive = true,
+                DeaktivatedAt = null,
+                CreatedAt = DateTime.UtcNow
+            };
+
+        db.Players.Add(playerToCreate);
+
+        // Save
         await db.SaveChangesAsync();
+        await tx.CommitAsync();
 
-        Message = "Spieler gespeichert.";
-
+        // Update UI
         NewPlayer = new Player
         {
             FirstName = "",
@@ -114,6 +193,86 @@ else
             CreatedAt = DateTime.UtcNow
         };
 
+        await LoadPlayersAsync();
+    }
+
+    private async Task DeletePlayerAsync(int id)
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var player = await db.Players.FindAsync(id);
+        if (player is null){
+            return;
+        }
+
+        db.Players.Remove(player);
+        await db.SaveChangesAsync();
+        await LoadPlayersAsync();
+    }
+
+    private void OpenReactivationPopup(int playerId)
+    {
+        ReactivationPlayerId = playerId;
+        ReactivationRfid = "";
+        ShowReactivationPopup = true;
+    }
+
+    private void CloseReactivationPopup()
+    {
+        ShowReactivationPopup = false;
+        ReactivationPlayerId = null;
+        ReactivationRfid = "";
+    }
+
+    private async Task ConfirmReactivationAsync()
+    {
+        if (ReactivationPlayerId is null)
+        {
+            return;
+        }
+
+        var normalizedRfid = string.IsNullOrWhiteSpace(ReactivationRfid)
+            ? null
+            : ReactivationRfid.Trim();
+
+        if (string.IsNullOrEmpty(normalizedRfid))
+        {
+            return;
+        }
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        var player = await db.Players.FirstOrDefaultAsync(p => p.Id == ReactivationPlayerId.Value);
+        if (player is null)
+        {
+            return;
+        }
+
+        var existingOwners = await db.Players
+            .Where(p => p.RfidTag == normalizedRfid && p.Id != player.Id)
+            .ToListAsync();
+
+        foreach (var owner in existingOwners)
+        {
+            owner.IsActive = false;
+            owner.DeaktivatedAt = DateTime.UtcNow;
+            owner.RfidTag = null;
+        }
+
+        if (existingOwners.Count > 0)
+        {
+            await db.SaveChangesAsync();
+        }
+
+        player.IsActive = true;
+        player.DeaktivatedAt = null;
+        player.RfidTag = normalizedRfid;
+
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        CloseReactivationPopup();
         await LoadPlayersAsync();
     }
 }

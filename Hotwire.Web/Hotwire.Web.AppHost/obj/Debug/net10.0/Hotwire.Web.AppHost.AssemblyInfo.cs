@@ -23,7 +23,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Hotwire.Web.AppHost")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1ae4bb35a03290048d19cf548d43484aff7c320b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fbeb79ef1a4f3ed6d3c1004efd9eaec941b85963")]
 [assembly: System.Reflection.AssemblyProductAttribute("Hotwire.Web.AppHost")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Hotwire.Web.AppHost")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
