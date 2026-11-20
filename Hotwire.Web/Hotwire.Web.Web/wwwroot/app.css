@@ -54,3 +54,47 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.home-hero {
+    border-radius: 1rem;
+    padding: 2rem;
+    color: #fff;
+    background: linear-gradient(135deg, #1b6ec2 0%, #0b3d79 100%);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.home-hero-content {
+    max-width: 780px;
+}
+
+.home-kicker {
+    text-transform: uppercase;
+    letter-spacing: .12rem;
+    opacity: .9;
+    margin-bottom: .5rem;
+}
+
+.home-card {
+    display: block;
+    background: #fff;
+    border: 1px solid #e8edf3;
+    border-radius: .75rem;
+    padding: 1rem;
+    color: #1d2a39;
+    transition: transform .15s ease, box-shadow .15s ease;
+    height: 100%;
+}
+
+.home-card h5 {
+    margin-bottom: .5rem;
+}
+
+.home-card p {
+    margin: 0;
+    color: #4a5565;
+}
+
+.home-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}

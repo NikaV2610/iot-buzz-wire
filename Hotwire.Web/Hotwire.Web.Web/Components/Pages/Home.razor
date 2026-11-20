@@ -2,6 +2,40 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="home-hero mb-4">
+	<div class="home-hero-content">
+		<p class="home-kicker">Hotwire Dashboard</p>
+		<h1>Heißer Draht Control Center</h1>
+		<p class="lead mb-4">
+			Verwalte Spieler, erfasse Test-Runs und beobachte die aktuellen Highscores an einem Ort.
+		</p>
+		<div class="d-flex flex-wrap gap-2">
+			<a class="btn btn-light" href="players">Spieler verwalten</a>
+			<a class="btn btn-outline-light" href="scoreboard">Zum Scoreboard</a>
+			<a class="btn btn-outline-light" href="debug-runs">Debug Runs</a>
+		</div>
+	</div>
+</div>
 
-Welcome to your new app.
+<div class="row g-3">
+	<div class="col-12 col-md-4">
+		<a class="home-card text-decoration-none" href="players">
+			<h5>👤 Players</h5>
+			<p>Spieler anlegen, deaktivieren, reaktivieren und RFID zuweisen.</p>
+		</a>
+	</div>
+
+	<div class="col-12 col-md-4">
+		<a class="home-card text-decoration-none" href="scoreboard">
+			<h5>🏁 Highscores</h5>
+			<p>Runs nach Zeit sortiert mit Kollisionen und Rangliste.</p>
+		</a>
+	</div>
+
+	<div class="col-12 col-md-4">
+		<a class="home-card text-decoration-none" href="debug-runs">
+			<h5>🧪 Debug Runs</h5>
+			<p>Manuell oder zufällig Test-Runs erzeugen für schnelle Validierung.</p>
+		</a>
+	</div>
+</div>

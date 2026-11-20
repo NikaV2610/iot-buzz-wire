@@ -48,7 +48,6 @@ C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\scopedcss\Components\Layout\NavMenu.razor.rz.scp.css
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\scopedcss\bundle\Hotwire.Web.Web.styles.css
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\scopedcss\projectbundle\Hotwire.Web.Web.bundle.scp.css
-C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\mdc1zmt8z2-{0}-88mibanyps-88mibanyps.gz
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\x9ss805kda-{0}-t1cqhe9u97-t1cqhe9u97.gz
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\fckuejfmev-{0}-c2jlpeoesf-c2jlpeoesf.gz
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\cxxbf3euxy-{0}-sejl45xvog-sejl45xvog.gz
@@ -282,3 +281,4 @@ C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\bin\Debug\
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\bin\Debug\net10.0\runtimes\win-x64\native\e_sqlite3.dll
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\bin\Debug\net10.0\runtimes\win-x86\native\e_sqlite3.dll
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\bin\Debug\net10.0\runtimes\win\lib\net9.0\System.Windows.Extensions.dll
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\mdc1zmt8z2-{0}-yxu6vub3j3-yxu6vub3j3.gz
