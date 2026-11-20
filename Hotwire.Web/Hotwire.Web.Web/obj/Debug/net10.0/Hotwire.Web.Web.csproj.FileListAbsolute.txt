@@ -282,4 +282,4 @@ C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\bin\Debug\
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\bin\Debug\net10.0\runtimes\win-x86\native\e_sqlite3.dll
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\bin\Debug\net10.0\runtimes\win\lib\net9.0\System.Windows.Extensions.dll
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\mdc1zmt8z2-{0}-yxu6vub3j3-yxu6vub3j3.gz
-C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\2f4e6xuoef-{0}-ej9a1wvzrs-ej9a1wvzrs.gz
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\2f4e6xuoef-{0}-d3hbjdvv2x-d3hbjdvv2x.gz

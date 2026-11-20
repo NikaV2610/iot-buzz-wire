@@ -6,6 +6,7 @@
 @using Hotwire.Web.Web.Data
 @using Hotwire.Web.Web.Models
 @using Microsoft.EntityFrameworkCore
+@using System.Globalization
 @using System.Text.Json
 
 <h1>Track</h1>
@@ -20,8 +21,8 @@ else if (Calibration is null)
 }
 else
 {
-	<div> class="alert alert-success"
-		Datai geladen
+	<div class="alert alert-success">
+		Datei geladen
 	</div>
 
 	<p><strong>Track:</strong> @Calibration.TrackName</p>
@@ -32,8 +33,8 @@ else
 		<p><strong>First timestamp:</strong> @Calibration.Points.First().Timestamp.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss.fff 'UTC'")</p>
 		<p><strong>Last timestamp:</strong> @Calibration.Points.Last().Timestamp.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss.fff 'UTC'")</p>
 		
-		<div class=="border rounded p-2 mt-3" style="background:#f8f9fa;">
-			<svg viwBox="0 0 1000 700" style="width:100%; height:70vh;">
+		<div class="border rounded p-2 mt-3" style="background:#f8f9fa;">
+			<svg viewBox="0 0 1000 700" style="width:100%; height:70vh;">
 				<polyline points="@PolylinePoints"
 						  fill="none"
 						  stroke="#1b6ec2"
@@ -46,14 +47,17 @@ else
 }
 
 @code {
+	private const double SvgWidth = 1000;
+	private const double SvgHeight = 700;
+	private const double Padding = 30;
+
 	private CalibrationData? Calibration;
 	private string? ErrorMessage;
 	private string PolylinePoints =>
-		Calibration is null
-			? string.Empty
-			: string.Join(" ",
-				Calibration.Points.Select(p => $"{p.X},{p.Y}"));
+		string.Join(" ", ScaledPoints.Select(p =>
+			$"{p.X.ToString("F2", CultureInfo.InvariantCulture)},{p.Y.ToString("F2", CultureInfo.InvariantCulture)}"));
 
+	private List<(double X, double Y)> ScaledPoints = [];
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -82,11 +86,150 @@ else
 			{
 				ErrorMessage = "JSON could not be deserialized";
 			}
+
+			if (Calibration is not null)
+			{
+				BuildScaledPoints();
+			}
 		}
 		catch (Exception ex)
 		{
 			ErrorMessage = $"ERROR: {ex.Message}";
 		}
+	}
+
+	private void BuildScaledPoints()
+	{
+		ScaledPoints.Clear();
+
+		if (Calibration is null || Calibration.Points.Count == 0)
+			return;
+
+		var ordered = Calibration.Points
+			.OrderBy(p => p.Timestamp)
+			.ToList();
+
+		var cleaned = FilterTeleportPoints(ordered);
+		if (cleaned.Count < 2)
+		{
+			cleaned = ordered;
+		}
+
+		var contour = BuildNearestNeighborPath(cleaned);
+		if (contour.Count < 2)
+		{
+			contour = cleaned;
+		}
+
+		var minX = contour.Min(p => p.X);
+		var maxX = contour.Max(p => p.X);
+		var minY = contour.Min(p => p.Y);
+		var maxY = contour.Max(p => p.Y);
+
+		var srcWidth = Math.Max(1, maxX - minX);
+		var srcHeight = Math.Max(1, maxY - minY);
+
+		var targetWidth = SvgWidth - (2 * Padding);
+		var targetHeight = SvgHeight - (2 * Padding);
+
+		var scale = Math.Min(targetWidth / srcWidth, targetHeight / srcHeight);
+
+		var drawWidth = srcWidth * scale;
+		var drawHeight = srcHeight * scale;
+
+		var offsetX = (SvgWidth - drawWidth) / 2.0;
+		var offsetY = (SvgHeight - drawHeight) / 2.0;
+
+		foreach (var p in contour)
+		{
+			var x = offsetX + (p.X - minX) * scale;
+			var y = SvgHeight - (offsetY + (p.Y - minY) * scale);
+
+			ScaledPoints.Add((x, y));
+		}
+	}
+
+	private static List<TrackPoint> FilterTeleportPoints(List<TrackPoint> points)
+	{
+		if (points.Count < 3)
+		{
+			return points;
+		}
+
+		var distances = new List<double>(points.Count - 1);
+		for (var i = 1; i < points.Count; i++)
+		{
+			var dx = points[i].X - points[i - 1].X;
+			var dy = points[i].Y - points[i - 1].Y;
+			distances.Add(Math.Sqrt((dx * dx) + (dy * dy)));
+		}
+
+		distances.Sort();
+		var median = distances[distances.Count / 2];
+		var maxAllowedStep = Math.Max(median * 3.0, 0.001);
+
+		var cleaned = new List<TrackPoint> { points[0] };
+		for (var i = 1; i < points.Count; i++)
+		{
+			var prev = cleaned[^1];
+			var current = points[i];
+			var dx = current.X - prev.X;
+			var dy = current.Y - prev.Y;
+			var step = Math.Sqrt((dx * dx) + (dy * dy));
+
+			if (step <= maxAllowedStep)
+			{
+				cleaned.Add(current);
+			}
+		}
+
+		return cleaned;
+	}
+
+	private static List<TrackPoint> BuildNearestNeighborPath(List<TrackPoint> points)
+	{
+		if (points.Count <= 2)
+		{
+			return points;
+		}
+
+		var remaining = new List<TrackPoint>(points);
+		var path = new List<TrackPoint>(points.Count);
+
+		// deterministic start: left-most point
+		var start = remaining.OrderBy(p => p.X).ThenBy(p => p.Y).First();
+		path.Add(start);
+		remaining.Remove(start);
+
+		while (remaining.Count > 0)
+		{
+			var last = path[^1];
+			TrackPoint? nearest = null;
+			var bestDistance = double.MaxValue;
+
+			foreach (var candidate in remaining)
+			{
+				var dx = candidate.X - last.X;
+				var dy = candidate.Y - last.Y;
+				var d = (dx * dx) + (dy * dy);
+
+				if (d < bestDistance)
+				{
+					bestDistance = d;
+					nearest = candidate;
+				}
+			}
+
+			if (nearest is null)
+			{
+				break;
+			}
+
+			path.Add(nearest);
+			remaining.Remove(nearest);
+		}
+
+		return path;
 	}
 
 	private sealed class CalibrationData
