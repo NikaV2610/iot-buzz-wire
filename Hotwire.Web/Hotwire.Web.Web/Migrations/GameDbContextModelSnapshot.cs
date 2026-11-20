@@ -23,6 +23,9 @@ namespace Hotwire.Web.Web.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("CalibrationId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("Collisions")
                         .HasColumnType("INTEGER");
 
@@ -43,6 +46,8 @@ namespace Hotwire.Web.Web.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CalibrationId");
+
                     b.HasIndex("PlayerId");
 
                     b.ToTable("GameRuns");
@@ -57,7 +62,7 @@ namespace Hotwire.Web.Web.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("DeaktivatedAT")
+                    b.Property<DateTime?>("DeaktivatedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("FirstName")
@@ -105,8 +110,32 @@ namespace Hotwire.Web.Web.Migrations
                     b.ToTable("PositionDatas");
                 });
 
+            modelBuilder.Entity("Hotwire.Web.Web.Models.TrackCalibration", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TrackCalibration");
+                });
+
             modelBuilder.Entity("Hotwire.Web.Web.Models.GameRun", b =>
                 {
+                    b.HasOne("Hotwire.Web.Web.Models.TrackCalibration", null)
+                        .WithMany()
+                        .HasForeignKey("CalibrationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Hotwire.Web.Web.Models.Player", null)
                         .WithMany()
                         .HasForeignKey("PlayerId")

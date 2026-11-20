@@ -62,6 +62,7 @@ else
 			<tr>
 				<th>Id</th>
 				<th>PlayerId</th>
+				<th>CalibrationId</th>
 				<th>Start</th>
 				<th>Ende</th>
 				<th>Dauer</th>
@@ -75,6 +76,7 @@ else
 				<tr>
 					<td>@r.Id</td>
 					<td>@r.PlayerId</td>
+					<td>@r.CalibrationId</td>
 					<td>@r.StartTime.ToString("u")</td>
 					<td>@(r.EndTime?.ToString("u") ?? "-")</td>
 					<td>@r.Duration</td>
@@ -86,9 +88,38 @@ else
 	</table>
 }
 
+<h3>Track Calibrations (@Calibrations.Count)</h3>
+@if (Calibrations.Count == 0)
+{
+	<p>Keine Kalibrierungen vorhanden.</p>
+}
+else
+{
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>Name</th>
+				<th>CreatedAt (UTC)</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var c in Calibrations)
+			{
+				<tr>
+					<td>@c.Id</td>
+					<td>@c.Name</td>
+					<td>@c.CreatedAt.ToString("u")</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+
 @code {
 	private List<Player> Players { get; set; } = [];
 	private List<GameRun> Runs { get; set; } = [];
+	private List<TrackCalibration> Calibrations { get; set; } = [];
 	private string? StatusMessage;
 
 	protected override async Task OnInitializedAsync()
@@ -108,7 +139,11 @@ else
 			.OrderByDescending(r => r.StartTime)
 			.ToListAsync();
 
-		StatusMessage = $"Geladen: {Players.Count} Player, {Runs.Count} Runs";
+		Calibrations = await db.TrackCalibration
+			.OrderByDescending(c => c.CreatedAt)
+			.ToListAsync();
+
+		StatusMessage = $"Geladen: {Players.Count} Player, {Runs.Count} Runs, {Calibrations.Count} Calibrations";
 	}
 
 	private async Task AddSamplePlayerAsync()
