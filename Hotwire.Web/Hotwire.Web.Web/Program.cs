@@ -1,6 +1,8 @@
-using Hotwire.Web.Web;
 using Hotwire.Web.Web.Components;
 using Hotwire.Web.Web.Data;
+using Hotwire.Web.Web.Iot.Configuration;
+using Hotwire.Web.Web.Iot.Services;
+using Hotwire.Web.Web.Iot.State;
 using Hotwire.Web.Web.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,12 +20,9 @@ builder.Services.AddOutputCache();
 builder.Services.AddDbContextFactory<GameDbContext>(options =>
     options.UseSqlite("Data Source=hotwire.db"));
 
-builder.Services.AddHttpClient<WeatherApiClient>(client =>
-    {
-        // This URL uses "https+http://" to indicate HTTPS is preferred over HTTP.
-        // Learn more about service discovery scheme resolution at https://aka.ms/dotnet/sdschemes.
-        client.BaseAddress = new("https+http://apiservice");
-    });
+builder.Services.Configure<MqttOptions>(builder.Configuration.GetSection("Mqtt"));
+builder.Services.AddSingleton<LiveGameState>();
+builder.Services.AddHostedService<MqttIngestionService>();
 
 builder.Services.AddSingleton<CalibrationStateService>();
 

@@ -283,3 +283,4 @@ C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\mdc1zmt8z2-{0}-3rnv90fvpe-3rnv90fvpe.gz
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\ewqnnp5cgz-{0}-8zm5mx67wr-8zm5mx67wr.gz
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\s0naseizzu-{0}-8zm5mx67wr-8zm5mx67wr.gz
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\bin\Debug\net10.0\MQTTnet.dll

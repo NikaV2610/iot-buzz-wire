@@ -62,7 +62,7 @@ namespace Hotwire.Web.Web.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("DeaktivatedAt")
+                    b.Property<DateTime?>("DeactivatedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("FirstName")

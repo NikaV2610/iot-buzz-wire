@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "inZFN/e4+tk=",
+  "dgSpecHash": "2ulsVZTo79k=",
   "success": true,
   "projectFilePath": "C:\\Users\\arian\\source\\repos\\iot-buzz-wire\\Hotwire.Web\\Hotwire.Web.Web\\Hotwire.Web.Web.csproj",
   "expectedPackageFiles": [
@@ -39,6 +39,7 @@
     "C:\\Users\\arian\\.nuget\\packages\\microsoft.extensions.telemetry.abstractions\\10.10.0\\microsoft.extensions.telemetry.abstractions.10.10.0.nupkg.sha512",
     "C:\\Users\\arian\\.nuget\\packages\\microsoft.net.stringtools\\17.14.28\\microsoft.net.stringtools.17.14.28.nupkg.sha512",
     "C:\\Users\\arian\\.nuget\\packages\\mono.texttemplating\\3.0.0\\mono.texttemplating.3.0.0.nupkg.sha512",
+    "C:\\Users\\arian\\.nuget\\packages\\mqttnet\\5.2.0.1603\\mqttnet.5.2.0.1603.nupkg.sha512",
     "C:\\Users\\arian\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
     "C:\\Users\\arian\\.nuget\\packages\\opentelemetry\\1.17.0\\opentelemetry.1.17.0.nupkg.sha512",
     "C:\\Users\\arian\\.nuget\\packages\\opentelemetry.api\\1.17.0\\opentelemetry.api.1.17.0.nupkg.sha512",

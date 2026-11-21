@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "ck/an+w6Z9w=",
+  "dgSpecHash": "on/i7HenIJY=",
   "success": true,
   "projectFilePath": "C:\\Users\\arian\\source\\repos\\iot-buzz-wire\\Hotwire.Web\\Hotwire.Web.ApiService\\Hotwire.Web.ApiService.csproj",
   "expectedPackageFiles": [
@@ -17,6 +17,7 @@
     "C:\\Users\\arian\\.nuget\\packages\\microsoft.extensions.telemetry\\10.10.0\\microsoft.extensions.telemetry.10.10.0.nupkg.sha512",
     "C:\\Users\\arian\\.nuget\\packages\\microsoft.extensions.telemetry.abstractions\\10.10.0\\microsoft.extensions.telemetry.abstractions.10.10.0.nupkg.sha512",
     "C:\\Users\\arian\\.nuget\\packages\\microsoft.openapi\\2.12.0\\microsoft.openapi.2.12.0.nupkg.sha512",
+    "C:\\Users\\arian\\.nuget\\packages\\mqttnet\\5.2.0.1603\\mqttnet.5.2.0.1603.nupkg.sha512",
     "C:\\Users\\arian\\.nuget\\packages\\opentelemetry\\1.17.0\\opentelemetry.1.17.0.nupkg.sha512",
     "C:\\Users\\arian\\.nuget\\packages\\opentelemetry.api\\1.17.0\\opentelemetry.api.1.17.0.nupkg.sha512",
     "C:\\Users\\arian\\.nuget\\packages\\opentelemetry.api.providerbuilderextensions\\1.17.0\\opentelemetry.api.providerbuilderextensions.1.17.0.nupkg.sha512",

@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MQTTnet" Version="5.2.0.1603" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Hotwire.Web.ApiService\Hotwire.Web.ApiService.csproj" />
     <ProjectReference Include="..\Hotwire.Web.Web\Hotwire.Web.Web.csproj" />
   </ItemGroup>

@@ -122,3 +122,4 @@ C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.AppHost\obj\De
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.AppHost\obj\Debug\net10.0\Hotwire.Web.AppHost.pdb
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.AppHost\obj\Debug\net10.0\Hotwire.Web.AppHost.genruntimeconfig.cache
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.AppHost\obj\Debug\net10.0\ref\Hotwire.Web.AppHost.dll
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.AppHost\bin\Debug\net10.0\MQTTnet.dll

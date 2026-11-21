@@ -8,6 +8,7 @@ public class Player
     public string FirstName { get; set; }
     public string LastName { get; set; }
     public DateTime CreatedAt { get; set; }
-    public DateTime? DeaktivatedAt { get; set; }
+
+    public DateTime? DeactivatedAt { get; set; }
 
 }

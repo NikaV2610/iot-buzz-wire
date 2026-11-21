@@ -56,6 +56,10 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
+            "MQTTnet": {
+              "target": "Package",
+              "version": "[5.2.0.1603, )"
+            },
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[10.0.12, )"
@@ -546,6 +550,10 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
+            "MQTTnet": {
+              "target": "Package",
+              "version": "[5.2.0.1603, )"
+            },
             "Microsoft.Extensions.Http.Resilience": {
               "target": "Package",
               "version": "[10.10.0, )"

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Hotwire.Web.ServiceDefaults")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1bd73076000e2a77c7f33ace1403cd305c33624b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+768a865ecf5a90a5aa7634c324766eefdc69bd1b")]
 [assembly: System.Reflection.AssemblyProductAttribute("Hotwire.Web.ServiceDefaults")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Hotwire.Web.ServiceDefaults")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

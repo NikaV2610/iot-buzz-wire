@@ -148,7 +148,6 @@ else
 	private int? BestRunId;
 	private string? ReplayMessage;
 	private string? ErrorMessage;
-	private int ReplayIndex = -1;
 	private bool IsReplayRunning;
 	private CancellationTokenSource? ReplayCts;
 	private double? ReplayDotX;
@@ -229,7 +228,7 @@ else
 		}
 		catch (Exception ex)
 		{
-			ErrorMessage = $"ERROR: {ex.Message}";
+			ErrorMessage = $"Error: {ex.Message}";
 		}
 	}
 
@@ -271,7 +270,6 @@ else
 		BuildCollisionReplayIndices();
 
 		BuildScaledReplayPoints();
-		ReplayIndex = -1;
 		IsReplayRunning = false;
 		ReplayDotX = null;
 		ReplayDotY = null;
@@ -295,7 +293,6 @@ else
 		var token = ReplayCts.Token;
 
 		IsReplayRunning = true;
-		ReplayIndex = 0;
 		ReplayDotX = ScaledReplayPoints[0].X;
 		ReplayDotY = ScaledReplayPoints[0].Y;
 		IsCollisionFrame = CollisionReplayIndices.Contains(0);
@@ -315,7 +312,6 @@ else
 				if (delay > TimeSpan.FromMilliseconds(250)) delay = TimeSpan.FromMilliseconds(250);
 
 				await Task.Delay(delay, token);
-				ReplayIndex = i;
 				ReplayDotX = ScaledReplayPoints[i].X;
 				ReplayDotY = ScaledReplayPoints[i].Y;
 				IsCollisionFrame = CollisionReplayIndices.Contains(i);
@@ -331,7 +327,6 @@ else
 		finally
 		{
 			IsReplayRunning = false;
-			ReplayIndex = -1;
 			ReplayDotX = null;
 			ReplayDotY = null;
 			IsCollisionFrame = false;
@@ -436,89 +431,6 @@ else
 			var y = SvgHeight - (offsetY + (p.Y - minY) * scale);
 			ScaledReplayPoints.Add((x, y));
 		}
-	}
-
-	private static List<TrackPoint> FilterTeleportPoints(List<TrackPoint> points)
-	{
-		if (points.Count < 3)
-		{
-			return points;
-		}
-
-		var distances = new List<double>(points.Count - 1);
-		for (var i = 1; i < points.Count; i++)
-		{
-			var dx = points[i].X - points[i - 1].X;
-			var dy = points[i].Y - points[i - 1].Y;
-			distances.Add(Math.Sqrt((dx * dx) + (dy * dy)));
-		}
-
-		distances.Sort();
-		var median = distances[distances.Count / 2];
-		var maxAllowedStep = Math.Max(median * 3.0, 0.001);
-
-		var cleaned = new List<TrackPoint> { points[0] };
-		for (var i = 1; i < points.Count; i++)
-		{
-			var prev = cleaned[^1];
-			var current = points[i];
-			var dx = current.X - prev.X;
-			var dy = current.Y - prev.Y;
-			var step = Math.Sqrt((dx * dx) + (dy * dy));
-
-			if (step <= maxAllowedStep)
-			{
-				cleaned.Add(current);
-			}
-		}
-
-		return cleaned;
-	}
-
-	private static List<TrackPoint> BuildNearestNeighborPath(List<TrackPoint> points)
-	{
-		if (points.Count <= 2)
-		{
-			return points;
-		}
-
-		var remaining = new List<TrackPoint>(points);
-		var path = new List<TrackPoint>(points.Count);
-
-		// deterministic start: left-most point
-		var start = remaining.OrderBy(p => p.X).ThenBy(p => p.Y).First();
-		path.Add(start);
-		remaining.Remove(start);
-
-		while (remaining.Count > 0)
-		{
-			var last = path[^1];
-			TrackPoint? nearest = null;
-			var bestDistance = double.MaxValue;
-
-			foreach (var candidate in remaining)
-			{
-				var dx = candidate.X - last.X;
-				var dy = candidate.Y - last.Y;
-				var d = (dx * dx) + (dy * dy);
-
-				if (d < bestDistance)
-				{
-					bestDistance = d;
-					nearest = candidate;
-				}
-			}
-
-			if (nearest is null)
-			{
-				break;
-			}
-
-			path.Add(nearest);
-			remaining.Remove(nearest);
-		}
-
-		return path;
 	}
 
 	private sealed class CalibrationData

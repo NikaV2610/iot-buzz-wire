@@ -57,3 +57,4 @@ C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ApiService\obj
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ApiService\obj\Debug\net10.0\Hotwire.Web.ApiService.pdb
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ApiService\obj\Debug\net10.0\Hotwire.Web.ApiService.genruntimeconfig.cache
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ApiService\obj\Debug\net10.0\ref\Hotwire.Web.ApiService.dll
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.ApiService\bin\Debug\net10.0\MQTTnet.dll

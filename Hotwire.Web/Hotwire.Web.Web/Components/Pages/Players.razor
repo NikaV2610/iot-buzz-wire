@@ -150,12 +150,12 @@ else
         await using var db = await DbFactory.CreateDbContextAsync();
         await using var tx = await db.Database.BeginTransactionAsync();
 
-        // RFID normalize
+        // Normalize RFID
         var normalizedRfid = string.IsNullOrWhiteSpace(NewPlayer.RfidTag)
             ? null
             : NewPlayer.RfidTag.Trim();
 
-        // If RFID exist, search old player
+        // If RFID exists, find previous owners and deactivate them
         if (!string.IsNullOrEmpty(normalizedRfid))
         {
             var existingOwners = await db.Players
@@ -165,7 +165,7 @@ else
             foreach (var owner in existingOwners)
             {
                 owner.IsActive = false;
-                owner.DeaktivatedAt = DateTime.UtcNow;
+                owner.DeactivatedAt = DateTime.UtcNow;
                 owner.RfidTag = null;
             }
 
@@ -175,14 +175,14 @@ else
             }
         }
 
-        // Aktivate new player
+        // Activate new player
         var playerToCreate = new Player
             {
                 FirstName = NewPlayer.FirstName.Trim(),
                 LastName = NewPlayer.LastName.Trim(),
                 RfidTag = normalizedRfid,
                 IsActive = true,
-                DeaktivatedAt = null,
+                DeactivatedAt = null,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -264,7 +264,7 @@ else
         foreach (var owner in existingOwners)
         {
             owner.IsActive = false;
-            owner.DeaktivatedAt = DateTime.UtcNow;
+            owner.DeactivatedAt = DateTime.UtcNow;
             owner.RfidTag = null;
         }
 
@@ -274,7 +274,7 @@ else
         }
 
         player.IsActive = true;
-        player.DeaktivatedAt = null;
+        player.DeactivatedAt = null;
         player.RfidTag = normalizedRfid;
 
         await db.SaveChangesAsync();
