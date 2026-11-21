@@ -1,10 +1,24 @@
 @page "/debug-runs"
 @using Hotwire.Web.Web.Data
 @using Hotwire.Web.Web.Models
+@using Hotwire.Web.Web.Services
 @using Microsoft.EntityFrameworkCore
+@using System.Text.Json
+
 @inject IDbContextFactory<GameDbContext> DbFactory
+@inject CalibrationStateService CalibrationState
+@inject IWebHostEnvironment Env
 
 <h1>Debug Runs</h1>
+
+@if (CalibrationState.ActiveCalibrationId is not null)
+{
+	<p><strong>Active Calibration:</strong> @CalibrationState.ActiveCalibrationId (@CalibrationState.ActiveCalibrationName)</p>
+}
+else
+{
+	<p class="text-warning"><strong>No active calibration</strong> — open /track first.</p>
+}
 
 @if (!string.IsNullOrWhiteSpace(Message))
 {
@@ -44,8 +58,20 @@
 
 	<button class="btn btn-primary" type="submit">Create test run</button>
 	<button class="btn btn-warning ms-2" type="button" @onclick="CreateRandomRunsAsync">Create 10 random runs</button>
+	<button class="btn btn-outline-danger ms-2" type="button" @onclick="PromptDeleteAllRuns">Delete all runs</button>
 	<button class="btn btn-secondary ms-2" type="button" @onclick="LoadDataAsync">Reload</button>
 </EditForm>
+
+@if (ShowDeleteAllConfirm)
+{
+	<div class="alert alert-warning mt-3">
+		<strong>Confirm:</strong> This will delete all runs and all related position data.
+		<div class="mt-2">
+			<button class="btn btn-danger btn-sm" @onclick="DeleteAllRunsAsync">Yes, delete all</button>
+			<button class="btn btn-secondary btn-sm ms-2" @onclick="CancelDeleteAllRuns">Cancel</button>
+		</div>
+	</div>
+}
 
 <hr />
 
@@ -66,6 +92,7 @@ else
 				<th>Duration</th>
 				<th>Collisions</th>
 				<th>Completed</th>
+				<th>Actions</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -79,6 +106,9 @@ else
 					<td>@r.Duration</td>
 					<td>@(r.Collisions?.ToString() ?? "-")</td>
 					<td>@r.Completed</td>
+					<td>
+						<button class="btn btn-sm btn-danger" @onclick="() => DeleteRunAsync(r.Id)">Delete</button>
+					</td>
 				</tr>
 			}
 		</tbody>
@@ -89,6 +119,7 @@ else
 	private List<Player> Players = [];
 	private List<GameRun> Runs = [];
 	private string? Message;
+	private bool ShowDeleteAllConfirm;
 
 	private NewRunInput NewRun = new()
 	{
@@ -139,11 +170,18 @@ else
 			return;
 		}
 
+		if (CalibrationState.ActiveCalibrationId is null)
+		{
+			Message = "No active calibration selected.";
+			return;
+		}
+
 		var now = DateTime.UtcNow;
 
 		var run = new GameRun
 		{
 			PlayerId = NewRun.PlayerId,
+			CalibrationId = CalibrationState.ActiveCalibrationId.Value,
 			Duration = NewRun.DurationSeconds,
 			Collisions = NewRun.Collisions,
 			Completed = NewRun.Completed,
@@ -172,6 +210,34 @@ else
 	{
 		await using var db = await DbFactory.CreateDbContextAsync();
 
+		if (CalibrationState.ActiveCalibrationId is null)
+		{
+			Message = "No active calibration selected.";
+			return;
+		}
+
+		var calibrationPath = Path.Combine(Env.WebRootPath, "data", "calibration.json");
+		if (!File.Exists(calibrationPath))
+		{
+			Message = "Calibration JSON not found.";
+			return;
+		}
+
+		CalibrationData? calibration;
+		await using (var stream = File.OpenRead(calibrationPath))
+		{
+			calibration = await JsonSerializer.DeserializeAsync<CalibrationData>(stream, new JsonSerializerOptions
+			{
+				PropertyNameCaseInsensitive = true
+			});
+		}
+
+		if (calibration is null || calibration.Points.Count < 2)
+		{
+			Message = "Calibration JSON has too few points.";
+			return;
+		}
+
 		var playerIds = await db.Players
 			.Where(p => p.IsActive)
 			.Select(p => p.Id)
@@ -197,6 +263,7 @@ else
 			runs.Add(new GameRun
 			{
 				PlayerId = playerIds[Random.Shared.Next(playerIds.Count)],
+				CalibrationId = CalibrationState.ActiveCalibrationId.Value,
 				Duration = duration,
 				Collisions = collisions,
 				Completed = completed,
@@ -208,7 +275,113 @@ else
 		db.GameRuns.AddRange(runs);
 		await db.SaveChangesAsync();
 
-		Message = "Created 10 random test runs.";
+		var allPositions = new List<PositionData>();
+
+		foreach (var run in runs)
+		{
+			var runPoints = calibration.Points;
+
+			var totalTicks = (run.EndTime ?? run.StartTime).Ticks - run.StartTime.Ticks;
+			if (totalTicks <= 0) totalTicks = TimeSpan.FromSeconds(1).Ticks;
+
+			for (int i = 0; i < runPoints.Count; i++)
+			{
+				var source = runPoints[i];
+
+				// klein wenig Noise, damit nicht alle Runs exakt gleich sind
+				var noiseX = (Random.Shared.NextDouble() - 0.5) * 2.0; // -1..+1
+				var noiseY = (Random.Shared.NextDouble() - 0.5) * 2.0;
+
+				var t = (double)i / (runPoints.Count - 1);
+				var ts = new DateTime(run.StartTime.Ticks + (long)(totalTicks * t), DateTimeKind.Utc);
+
+				allPositions.Add(new PositionData
+				{
+					GameRunId = run.Id,
+					X = (int)Math.Round(source.X + noiseX),
+					Y = (int)Math.Round(source.Y + noiseY),
+					TimeStamp = ts
+				});
+			}
+		}
+
+		db.PositionDatas.AddRange(allPositions);
+		await db.SaveChangesAsync();
+
+		Message = $"Created {runs.Count} random runs and {allPositions.Count} position points.";
 		await LoadDataAsync();
+	}
+
+	private async Task DeleteRunAsync(int runId)
+	{
+		await using var db = await DbFactory.CreateDbContextAsync();
+
+		var positions = await db.PositionDatas
+			.Where(p => p.GameRunId == runId)
+			.ToListAsync();
+
+		if (positions.Count > 0)
+		{
+			db.PositionDatas.RemoveRange(positions);
+		}
+
+		var run = await db.GameRuns.FirstOrDefaultAsync(r => r.Id == runId);
+		if (run is null)
+		{
+			Message = $"Run #{runId} not found.";
+			return;
+		}
+
+		db.GameRuns.Remove(run);
+		await db.SaveChangesAsync();
+
+		Message = $"Run #{runId} deleted.";
+		await LoadDataAsync();
+	}
+
+	private void PromptDeleteAllRuns()
+	{
+		ShowDeleteAllConfirm = true;
+	}
+
+	private void CancelDeleteAllRuns()
+	{
+		ShowDeleteAllConfirm = false;
+	}
+
+	private async Task DeleteAllRunsAsync()
+	{
+		await using var db = await DbFactory.CreateDbContextAsync();
+
+		var allPositions = await db.PositionDatas.ToListAsync();
+		if (allPositions.Count > 0)
+		{
+			db.PositionDatas.RemoveRange(allPositions);
+		}
+
+		var allRuns = await db.GameRuns.ToListAsync();
+		if (allRuns.Count > 0)
+		{
+			db.GameRuns.RemoveRange(allRuns);
+		}
+
+		await db.SaveChangesAsync();
+
+		ShowDeleteAllConfirm = false;
+		Message = "All runs and related position data deleted.";
+		await LoadDataAsync();
+	}
+
+	private sealed class CalibrationData
+	{
+		public string TrackName { get; set; } = "";
+		public List<CalibrationPoint> Points { get; set; } = [];
+	}
+
+	private sealed class CalibrationPoint
+	{
+		public double X { get; set; }
+		public double Y { get; set; }
+		public DateTime Timestamp { get; set; }
 	}
 }

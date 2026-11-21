@@ -1,6 +1,7 @@
 using Hotwire.Web.Web;
 using Hotwire.Web.Web.Components;
 using Hotwire.Web.Web.Data;
+using Hotwire.Web.Web.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +24,8 @@ builder.Services.AddHttpClient<WeatherApiClient>(client =>
         // Learn more about service discovery scheme resolution at https://aka.ms/dotnet/sdschemes.
         client.BaseAddress = new("https+http://apiservice");
     });
+
+builder.Services.AddSingleton<CalibrationStateService>();
 
 var app = builder.Build();
 
