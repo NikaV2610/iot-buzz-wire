@@ -3,6 +3,7 @@ using System.Text.Json;
 using Hotwire.Web.Web.Iot.Configuration;
 using Hotwire.Web.Web.Iot.Contracts;
 using Hotwire.Web.Web.Iot.State;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MQTTnet;
 using MQTTnet.Protocol;
@@ -13,14 +14,17 @@ public sealed class MqttIngestionService : BackgroundService
 {
     private readonly ILogger<MqttIngestionService> _logger;
     private readonly IOptionsMonitor<MqttOptions> _options;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly LiveGameState _state;
     private IMqttClient? _client;
 
     public MqttIngestionService(
+        IServiceScopeFactory scopeFactory,
         ILogger<MqttIngestionService> logger, 
         IOptionsMonitor<MqttOptions> options, 
         LiveGameState state)
     {
+        _scopeFactory = scopeFactory;
         _logger = logger;
         _options = options;
         _state = state;
@@ -83,7 +87,7 @@ public sealed class MqttIngestionService : BackgroundService
         }
     }
 
-    private Task OnMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs args)
+    private async Task OnMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs args)
     {
         try
         {
@@ -92,6 +96,8 @@ public sealed class MqttIngestionService : BackgroundService
 
             var c = _options.CurrentValue;
             var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            using var scope = _scopeFactory.CreateScope();
+            var coordinator = scope.ServiceProvider.GetRequiredService<GameIngestionCoordinator>();
 
             if (topic == c.PositionTopic)
             {
@@ -99,7 +105,7 @@ public sealed class MqttIngestionService : BackgroundService
                 if (msg is not null)
                 {
                     if (msg.TimestampUtc == default) msg.TimestampUtc = DateTime.UtcNow;
-                    _state.ApplyPosition(msg);
+                    await coordinator.HandlePositionAsync(msg);
                 }
             }
             else if (topic == c.GameTopic)
@@ -108,7 +114,7 @@ public sealed class MqttIngestionService : BackgroundService
                 if (msg is not null)
                 {
                     if (msg.TimestampUtc == default) msg.TimestampUtc = DateTime.UtcNow;
-                    _state.ApplyEvent(msg);
+                    await coordinator.HandleGameEventAsync(msg);
                 }
             }
         }
@@ -116,8 +122,6 @@ public sealed class MqttIngestionService : BackgroundService
         {
             _logger.LogWarning(ex, "Failed to process MQTT message.");
         }
-
-        return Task.CompletedTask;
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)

@@ -26,6 +26,8 @@ builder.Services.AddHostedService<MqttIngestionService>();
 
 builder.Services.AddSingleton<CalibrationStateService>();
 
+builder.Services.AddScoped<GameIngestionCoordinator>();
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

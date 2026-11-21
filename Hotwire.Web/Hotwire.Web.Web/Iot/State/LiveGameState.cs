@@ -8,8 +8,9 @@ public sealed class LiveGameState
     public GameEventMessage? LastEvent { get; private set; }
     public int CollisionCount { get; private set; }
     public bool IsRunActive { get; private set; }
-
     public event Action? Changed;
+    public int? CurrentRunId { get; private set; }
+    public string? CurrentRunExternalId { get; private set; }
 
     public void ApplyPosition(PositionMessage message)
     {
@@ -36,6 +37,21 @@ public sealed class LiveGameState
             CollisionCount++;
         }
 
+        Changed?.Invoke();
+    }
+
+    public void SetCurrentRun(int runId, string? externalId)
+    {
+        CurrentRunId = runId;
+        CurrentRunExternalId = externalId;
+        Changed?.Invoke();
+    }
+
+    public void ClearCurrentRun()
+    {
+        CurrentRunId = null;
+        CurrentRunExternalId = null;
+        IsRunActive = false;
         Changed?.Invoke();
     }
 }
