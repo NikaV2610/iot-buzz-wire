@@ -5,37 +5,53 @@
 <div class="home-hero mb-4">
 	<div class="home-hero-content">
 		<p class="home-kicker">Hotwire Dashboard</p>
-		<h1>Heißer Draht Control Center</h1>
+		<h1>Hotwire Control Center</h1>
 		<p class="lead mb-4">
-			Verwalte Spieler, erfasse Test-Runs und beobachte die aktuellen Highscores an einem Ort.
+			Manage players, record test runs, and monitor current highscores in one place.
 		</p>
 		<div class="d-flex flex-wrap gap-2">
-			<a class="btn btn-light" href="players">Spieler verwalten</a>
-			<a class="btn btn-outline-light" href="scoreboard">Zum Scoreboard</a>
-			<a class="btn btn-outline-light" href="debug-runs">Debug Runs</a>
+			<a class="btn btn-light" href="track">Open track</a>
+			<a class="btn btn-outline-light" href="scoreboard">Open scoreboard</a>
+			<a class="btn btn-light" href="players">Manage players</a>
+			<a class="btn btn-outline-light" href="debug-db">Open debug DB</a>
+			<a class="btn btn-outline-light" href="debug-runs">Open debug runs</a>
 		</div>
 	</div>
 </div>
 
 <div class="row g-3">
-	<div class="col-12 col-md-4">
-		<a class="home-card text-decoration-none" href="players">
-			<h5>👤 Players</h5>
-			<p>Spieler anlegen, deaktivieren, reaktivieren und RFID zuweisen.</p>
+	<div class="col-12 col-md-6 col-lg-4">
+		<a class="home-card text-decoration-none" href="track">
+			<h5>🛤️ Track</h5>
+			<p>View calibration contour and replay the best run.</p>
 		</a>
 	</div>
 
-	<div class="col-12 col-md-4">
+	<div class="col-12 col-md-6 col-lg-4">
 		<a class="home-card text-decoration-none" href="scoreboard">
 			<h5>🏁 Highscores</h5>
-			<p>Runs nach Zeit sortiert mit Kollisionen und Rangliste.</p>
+			<p>View run rankings by time, including collisions and placement.</p>
 		</a>
 	</div>
 
-	<div class="col-12 col-md-4">
+	<div class="col-12 col-md-6 col-lg-4">
+		<a class="home-card text-decoration-none" href="players">
+			<h5>👤 Players</h5>
+			<p>Create, deactivate, reactivate, and assign RFID tags to players.</p>
+		</a>
+	</div>
+
+	<div class="col-12 col-md-6 col-lg-4">
+		<a class="home-card text-decoration-none" href="debug-db">
+			<h5>🗄️ Debug DB</h5>
+			<p>Inspect players, runs, and calibrations directly from the database.</p>
+		</a>
+	</div>
+
+	<div class="col-12 col-md-6 col-lg-4">
 		<a class="home-card text-decoration-none" href="debug-runs">
 			<h5>🧪 Debug Runs</h5>
-			<p>Manuell oder zufällig Test-Runs erzeugen für schnelle Validierung.</p>
+			<p>Create manual or random test runs for quick validation.</p>
 		</a>
 	</div>
 </div>

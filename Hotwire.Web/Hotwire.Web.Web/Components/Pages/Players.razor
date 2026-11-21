@@ -6,87 +6,95 @@
 @using Hotwire.Web.Web.Models
 @using Microsoft.EntityFrameworkCore
 
-<h1>Players</h1>
+<div class="page-header">
+    <h1 class="page-title">Players</h1>
+    <p class="page-subtitle">Manage player identities and RFID assignments.</p>
+</div>
 
-<h3>Add new player</h3>
+<div class="surface-card mb-3">
+    <h3 class="h5 mb-3">Add new player</h3>
 
-<EditForm Model="@NewPlayer" OnValidSubmit="@CreatePlayerAsync">
-	<DataAnnotationsValidator />
-	<ValidationSummary />
+    <EditForm Model="@NewPlayer" OnValidSubmit="@CreatePlayerAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-	<div class="mb-2">
-		<label>First Name</label>
-        <InputText class="form-control" @bind-Value="NewPlayer.FirstName" />
-	</div>
+        <div class="mb-2">
+            <label class="form-label">First Name</label>
+            <InputText class="form-control" @bind-Value="NewPlayer.FirstName" />
+        </div>
 
-	<div class="mb-2">
-		<label>Last Name</label>
-		<InputText class="form-control" @bind-Value="NewPlayer.LastName"/>
-	</div>
+        <div class="mb-2">
+            <label class="form-label">Last Name</label>
+            <InputText class="form-control" @bind-Value="NewPlayer.LastName"/>
+        </div>
 
-	<div class="mb-2">
-		<label>RFID</label>
-        <InputText class="form-control" @bind-Value="NewPlayer.RfidTag"/>
-	</div>
+        <div class="mb-3">
+            <label class="form-label">RFID</label>
+            <InputText class="form-control" @bind-Value="NewPlayer.RfidTag"/>
+        </div>
 
-	<button class="btn btn-primary" type="submit">Save</button>
-</EditForm>
+        <button class="btn btn-primary" type="submit">Save player</button>
+    </EditForm>
+</div>
 
-<hr />
-
-<h3>List</h3>
+<div class="surface-card">
+    <h3 class="h5 mb-3">List</h3>
 
 @if (AllPlayers.Count == 0)
 {
-	<p>No player entries</p>
+    <div class="empty-state">No players found.</div>
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>RFID</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var p in AllPlayers)
-            {
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
                 <tr>
-                    <td>@p.Id</td>
-                    <td>@p.FirstName @p.LastName</td>
-                    <td>@p.RfidTag</td>
-                    <td>
-                        @if (p.IsActive)
-                        {
-                            <span class="badge text-bg-success">Active</span>
-                        }
-                        else
-                        {
-                            <span class="badge text-bg-secondary">Inactive</span>
-                        }
-                    </td>
-                    <td>
-                        @if (!p.IsActive)
-                        {
-                            <button class="btn btn btn-dark"
-                                    @onclick="() => OpenReactivationPopup(p.Id)">
-                                Reactivate
-                            </button>
-                        }
-                        <button class="btn btn btn-danger"
-                                @onclick="() => DeletePlayerAsync(p.Id)">
-                            Delete
-                        </button>
-                    </td>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>RFID</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var p in AllPlayers)
+                {
+                    <tr>
+                        <td>@p.Id</td>
+                        <td>@p.FirstName @p.LastName</td>
+                        <td>@p.RfidTag</td>
+                        <td>
+                            @if (p.IsActive)
+                            {
+                                <span class="status-pill is-active">Active</span>
+                            }
+                            else
+                            {
+                                <span class="status-pill is-inactive">Inactive</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!p.IsActive)
+                            {
+                                <button class="btn btn-dark btn-sm me-2"
+                                        @onclick="() => OpenReactivationPopup(p.Id)">
+                                    Reactivate
+                                </button>
+                            }
+                            <button class="btn btn-danger btn-sm"
+                                    @onclick="() => DeletePlayerAsync(p.Id)">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
+
+</div>
 
 @if (ShowReactivationPopup)
 {

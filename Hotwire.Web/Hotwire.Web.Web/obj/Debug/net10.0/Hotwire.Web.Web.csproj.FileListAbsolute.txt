@@ -95,8 +95,6 @@ C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\0zdokwaiej-{0}-ogg0o4dxea-ogg0o4dxea.gz
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\dchtbtv8uf-{0}-xmryko9e6j-xmryko9e6j.gz
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\1gv00uj5el-{0}-7d17r9czpp-7d17r9czpp.gz
-C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\ewqnnp5cgz-{0}-jk2eic8as8-jk2eic8as8.gz
-C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\s0naseizzu-{0}-jk2eic8as8-jk2eic8as8.gz
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\staticwebassets.build.json
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\staticwebassets.build.json.cache
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\staticwebassets.development.json
@@ -281,5 +279,7 @@ C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\bin\Debug\
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\bin\Debug\net10.0\runtimes\win-x64\native\e_sqlite3.dll
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\bin\Debug\net10.0\runtimes\win-x86\native\e_sqlite3.dll
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\bin\Debug\net10.0\runtimes\win\lib\net9.0\System.Windows.Extensions.dll
-C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\mdc1zmt8z2-{0}-yxu6vub3j3-yxu6vub3j3.gz
 C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\2f4e6xuoef-{0}-d3hbjdvv2x-d3hbjdvv2x.gz
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\mdc1zmt8z2-{0}-3rnv90fvpe-3rnv90fvpe.gz
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\ewqnnp5cgz-{0}-8zm5mx67wr-8zm5mx67wr.gz
+C:\Users\arian\source\repos\iot-buzz-wire\Hotwire.Web\Hotwire.Web.Web\obj\Debug\net10.0\compressed\s0naseizzu-{0}-8zm5mx67wr-8zm5mx67wr.gz

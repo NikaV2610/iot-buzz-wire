@@ -3,6 +3,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
 }
 
 main[b-r71fxof4g8] {
@@ -10,40 +11,60 @@ main[b-r71fxof4g8] {
 }
 
 .sidebar[b-r71fxof4g8] {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    background: linear-gradient(180deg, #0b2f63 0%, #173a77 45%, #1f497d 100%);
+    box-shadow: 4px 0 20px rgba(10, 20, 40, 0.15);
 }
 
 .top-row[b-r71fxof4g8] {
-    background-color: #f7f7f7;
-    border-bottom: 1px solid #d6d5d5;
-    justify-content: flex-end;
-    height: 3.5rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid #e6eaf0;
+    min-height: 4rem;
     display: flex;
     align-items: center;
+    backdrop-filter: saturate(120%) blur(6px);
 }
 
-    .top-row[b-r71fxof4g8]  a, .top-row[b-r71fxof4g8]  .btn-link {
-        white-space: nowrap;
-        margin-left: 1.5rem;
-        text-decoration: none;
-    }
+.top-row-inner[b-r71fxof4g8] {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
 
-    .top-row[b-r71fxof4g8]  a:hover, .top-row[b-r71fxof4g8]  .btn-link:hover {
-        text-decoration: underline;
-    }
+.app-title[b-r71fxof4g8] {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #163a70;
+    line-height: 1.1;
+}
 
-    .top-row[b-r71fxof4g8]  a:first-child {
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+.app-subtitle[b-r71fxof4g8] {
+    font-size: .78rem;
+    color: #5d6d81;
+}
+
+.top-link[b-r71fxof4g8] {
+    white-space: nowrap;
+    text-decoration: none;
+    color: #2b5f9e;
+    font-weight: 600;
+}
+
+.top-link:hover[b-r71fxof4g8] {
+    text-decoration: underline;
+}
 
 @media (max-width: 640.98px) {
     .top-row[b-r71fxof4g8] {
-        justify-content: space-between;
+        min-height: auto;
+        padding-top: .6rem;
+        padding-bottom: .6rem;
     }
 
-    .top-row[b-r71fxof4g8]  a, .top-row[b-r71fxof4g8]  .btn-link {
-        margin-left: 0;
+    .top-row-inner[b-r71fxof4g8] {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }
 
@@ -62,13 +83,7 @@ main[b-r71fxof4g8] {
     .top-row[b-r71fxof4g8] {
         position: sticky;
         top: 0;
-        z-index: 1;
-    }
-
-    .top-row.auth[b-r71fxof4g8]  a:first-child {
-        flex: 1;
-        text-align: right;
-        width: 0;
+        z-index: 10;
     }
 
     .top-row[b-r71fxof4g8], article[b-r71fxof4g8] {
@@ -119,7 +134,9 @@ main[b-r71fxof4g8] {
 }
 
 .navbar-brand[b-6oxjngl8dw] {
-    font-size: 1.1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: .02em;
 }
 
 .bi[b-6oxjngl8dw] {
@@ -130,6 +147,26 @@ main[b-r71fxof4g8] {
     margin-right: 0.75rem;
     top: -1px;
     background-size: cover;
+}
+
+.bi-route[b-6oxjngl8dw] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 3A1.5 1.5 0 1 1 2 4.118v7.764a1.5 1.5 0 1 1-1 0V4.118a1.5 1.5 0 0 1 3.5-1.118zm9 0A1.5 1.5 0 1 1 11 4.118v.764a1.5 1.5 0 1 0 1 0v-.764A1.5 1.5 0 0 1 13.5 3zM7 7.5A2.5 2.5 0 1 1 9.5 10H8a1 1 0 0 0 0 2h1.5a3.5 3.5 0 1 0-3.5-3.5z'/%3E%3C/svg%3E");
+}
+
+.bi-trophy-fill[b-6oxjngl8dw] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M2 1a1 1 0 0 0-1 1v2a5 5 0 0 0 4 4.9V10a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V8.9A5 5 0 0 0 15 4V2a1 1 0 0 0-1-1H2zm11 2v1a4 4 0 0 1-2 3.465V3h2zM3 3h2v4.465A4 4 0 0 1 3 4V3z'/%3E%3Cpath d='M7 13h2v2H7z'/%3E%3C/svg%3E");
+}
+
+.bi-people-fill[b-6oxjngl8dw] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM5.216 14A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A5.52 5.52 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z'/%3E%3C/svg%3E");
+}
+
+.bi-database-fill[b-6oxjngl8dw] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M8 0C3.58 0 0 1.343 0 3v10c0 1.657 3.58 3 8 3s8-1.343 8-3V3c0-1.657-3.58-3-8-3zm0 1c4.418 0 7 .999 7 2s-2.582 2-7 2-7-.999-7-2 2.582-2 7-2zm0 5c4.418 0 7-.999 7-2v2c0 1.001-2.582 2-7 2s-7-.999-7-2V4c0 1.001 2.582 2 7 2zm0 3c4.418 0 7-.999 7-2v2c0 1.001-2.582 2-7 2s-7-.999-7-2V7c0 1.001 2.582 2 7 2zm0 3c4.418 0 7-.999 7-2v2c0 1.001-2.582 2-7 2s-7-.999-7-2v-2c0 1.001 2.582 2 7 2z'/%3E%3C/svg%3E");
+}
+
+.bi-clock-history[b-6oxjngl8dw] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M8.515 3.879A.5.5 0 0 0 8 4.375V8.5a.5.5 0 0 0 .276.447l2.5 1.25a.5.5 0 1 0 .448-.894L9 8.382V4.375a.5.5 0 0 0-.485-.496z'/%3E%3Cpath d='M8 1a7 7 0 1 1-6.95 7.84.5.5 0 0 1 .994-.11A6 6 0 1 0 8 2a.5.5 0 0 1 0-1z'/%3E%3Cpath d='M1 8.5a.5.5 0 0 1 .5-.5H4a.5.5 0 0 1 0 1H2.707l1.147 1.146a.5.5 0 0 1-.708.708l-2-2A.5.5 0 0 1 1 8.5z'/%3E%3C/svg%3E");
 }
 
 .bi-house-door-fill[b-6oxjngl8dw] {
@@ -145,8 +182,8 @@ main[b-r71fxof4g8] {
 }
 
 .nav-item[b-6oxjngl8dw] {
-    font-size: 0.9rem;
-    padding-bottom: 0.5rem;
+    font-size: 0.92rem;
+    padding-bottom: 0.35rem;
 }
 
     .nav-item:first-of-type[b-6oxjngl8dw] {
@@ -158,22 +195,24 @@ main[b-r71fxof4g8] {
     }
 
     .nav-item[b-6oxjngl8dw]  a {
-        color: #d7d7d7;
-        border-radius: 4px;
-        height: 3rem;
+        color: #e8eef8;
+        border-radius: 8px;
+        height: 2.75rem;
         display: flex;
         align-items: center;
-        line-height: 3rem;
+        line-height: 2.75rem;
+        transition: background-color .15s ease, transform .15s ease;
     }
 
 .nav-item[b-6oxjngl8dw]  a.active {
-    background-color: rgba(255,255,255,0.37);
+    background-color: rgba(255,255,255,0.22);
     color: white;
 }
 
 .nav-item[b-6oxjngl8dw]  a:hover {
-    background-color: rgba(255,255,255,0.1);
+    background-color: rgba(255,255,255,0.13);
     color: white;
+    transform: translateX(2px);
 }
 
 .nav-scrollable[b-6oxjngl8dw] {

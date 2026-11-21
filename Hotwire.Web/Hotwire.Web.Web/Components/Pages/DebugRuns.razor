@@ -9,15 +9,23 @@
 @inject CalibrationStateService CalibrationState
 @inject IWebHostEnvironment Env
 
-<h1>Debug Runs</h1>
+<div class="page-header">
+	<h1 class="page-title">Debug Runs</h1>
+	<p class="page-subtitle">Create, inspect, and clean up synthetic run data.</p>
+</div>
 
 @if (CalibrationState.ActiveCalibrationId is not null)
 {
-	<p><strong>Active Calibration:</strong> @CalibrationState.ActiveCalibrationId (@CalibrationState.ActiveCalibrationName)</p>
+	<div class="meta-grid">
+		<div class="meta-item">
+			<span class="meta-label">Active Calibration</span>
+			<span class="meta-value">@CalibrationState.ActiveCalibrationId (@CalibrationState.ActiveCalibrationName)</span>
+		</div>
+	</div>
 }
 else
 {
-	<p class="text-warning"><strong>No active calibration</strong> — open /track first.</p>
+	<p class="text-warning"><strong>No active calibration selected.</strong> Open /track first.</p>
 }
 
 @if (!string.IsNullOrWhiteSpace(Message))
@@ -25,42 +33,46 @@ else
 	<div class="alert alert-info">@Message</div>
 }
 
-<EditForm Model="@NewRun" OnValidSubmit="CreateRunAsync">
-	<DataAnnotationsValidator />
+<div class="surface-card mb-3">
+	<EditForm Model="@NewRun" OnValidSubmit="CreateRunAsync">
+		<DataAnnotationsValidator />
 
-	<div class="row g-3 mb-3">
-		<div class="col-md-4">
-			<label class="form-label">Player</label>
-			<InputSelect class="form-select" @bind-Value="NewRun.PlayerId">
-				<option value="0">-- select player --</option>
-				@foreach (var p in Players)
-				{
-					<option value="@p.Id">@p.FirstName @p.LastName (@(p.IsActive ? "Active" : "Inactive"))</option>
-				}
-			</InputSelect>
+		<div class="row g-3 mb-3">
+			<div class="col-md-4">
+				<label class="form-label">Player</label>
+				<InputSelect class="form-select" @bind-Value="NewRun.PlayerId">
+					<option value="0">-- select player --</option>
+					@foreach (var p in Players)
+					{
+						<option value="@p.Id">@p.FirstName @p.LastName (@(p.IsActive ? "Active" : "Inactive"))</option>
+					}
+				</InputSelect>
+			</div>
+
+			<div class="col-md-4">
+				<label class="form-label">Duration (seconds)</label>
+				<InputNumber class="form-control" @bind-Value="NewRun.DurationSeconds" />
+			</div>
+
+			<div class="col-md-4">
+				<label class="form-label">Collisions</label>
+				<InputNumber class="form-control" @bind-Value="NewRun.Collisions" />
+			</div>
 		</div>
 
-		<div class="col-md-4">
-			<label class="form-label">Duration (seconds)</label>
-			<InputNumber class="form-control" @bind-Value="NewRun.DurationSeconds" />
+		<div class="form-check mb-3">
+			<InputCheckbox class="form-check-input" id="completedCheck" @bind-Value="NewRun.Completed" />
+			<label class="form-check-label" for="completedCheck">Completed</label>
 		</div>
 
-		<div class="col-md-4">
-			<label class="form-label">Collisions</label>
-			<InputNumber class="form-control" @bind-Value="NewRun.Collisions" />
+		<div class="page-actions">
+			<button class="btn btn-primary" type="submit">Create test run</button>
+			<button class="btn btn-warning" type="button" @onclick="CreateRandomRunsAsync">Create 10 random runs</button>
+			<button class="btn btn-outline-danger" type="button" @onclick="PromptDeleteAllRuns">Delete all runs</button>
+			<button class="btn btn-secondary" type="button" @onclick="LoadDataAsync">Reload</button>
 		</div>
-	</div>
-
-	<div class="form-check mb-3">
-		<InputCheckbox class="form-check-input" id="completedCheck" @bind-Value="NewRun.Completed" />
-		<label class="form-check-label" for="completedCheck">Completed</label>
-	</div>
-
-	<button class="btn btn-primary" type="submit">Create test run</button>
-	<button class="btn btn-warning ms-2" type="button" @onclick="CreateRandomRunsAsync">Create 10 random runs</button>
-	<button class="btn btn-outline-danger ms-2" type="button" @onclick="PromptDeleteAllRuns">Delete all runs</button>
-	<button class="btn btn-secondary ms-2" type="button" @onclick="LoadDataAsync">Reload</button>
-</EditForm>
+	</EditForm>
+</div>
 
 @if (ShowDeleteAllConfirm)
 {
@@ -73,47 +85,49 @@ else
 	</div>
 }
 
-<hr />
-
-<h3>Latest runs (@Runs.Count)</h3>
+<div class="surface-card">
+<h3 class="h5 mb-3">Latest runs (@Runs.Count)</h3>
 @if (Runs.Count == 0)
 {
-	<p>No runs yet.</p>
+	<div class="empty-state">No runs found.</div>
 }
 else
 {
-	<table class="table table-striped">
-		<thead>
-			<tr>
-				<th>Id</th>
-				<th>PlayerId</th>
-				<th>Start</th>
-				<th>End</th>
-				<th>Duration</th>
-				<th>Collisions</th>
-				<th>Completed</th>
-				<th>Actions</th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var r in Runs)
-			{
+	<div class="table-wrap">
+		<table class="table table-striped mb-0">
+			<thead>
 				<tr>
-					<td>@r.Id</td>
-					<td>@r.PlayerId</td>
-					<td>@r.StartTime.ToString("u")</td>
-					<td>@(r.EndTime?.ToString("u") ?? "-")</td>
-					<td>@r.Duration</td>
-					<td>@(r.Collisions?.ToString() ?? "-")</td>
-					<td>@r.Completed</td>
-					<td>
-						<button class="btn btn-sm btn-danger" @onclick="() => DeleteRunAsync(r.Id)">Delete</button>
-					</td>
+					<th>Id</th>
+					<th>PlayerId</th>
+					<th>Start</th>
+					<th>End</th>
+					<th>Duration</th>
+					<th>Collisions</th>
+					<th>Completed</th>
+					<th>Actions</th>
 				</tr>
-			}
-		</tbody>
-	</table>
+			</thead>
+			<tbody>
+				@foreach (var r in Runs)
+				{
+					<tr>
+						<td>@r.Id</td>
+						<td>@r.PlayerId</td>
+						<td>@r.StartTime.ToString("u")</td>
+						<td>@(r.EndTime?.ToString("u") ?? "-")</td>
+						<td>@r.Duration</td>
+						<td>@(r.Collisions?.ToString() ?? "-")</td>
+						<td>@r.Completed</td>
+						<td>
+							<button class="btn btn-sm btn-danger" @onclick="() => DeleteRunAsync(r.Id)">Delete</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
 }
+</div>
 
 @code {
 	private List<Player> Players = [];
