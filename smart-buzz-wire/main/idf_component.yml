@@ -1,2 +1,3 @@
 dependencies:
   abobija/rc522: "^3.0.0"
+  espressif/mqtt: "*"   # since ESP-IDF 6 MQTT is no longer built in

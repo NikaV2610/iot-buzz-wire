@@ -35,10 +35,10 @@ typedef struct {
 static game_state_t state = STATE_IDLE;
 static char player_uid[RFID_UID_LEN] = "";
 
-static input_t in_wire   = { PIN_WIRE };
-static input_t in_start  = { PIN_START_CONTACT };
-static input_t in_stop   = { PIN_STOP_CONTACT };
-static input_t in_button = { PIN_CAL_BUTTON };
+static input_t in_wire   = { .pin = PIN_WIRE };
+static input_t in_start  = { .pin = PIN_START_CONTACT };
+static input_t in_stop   = { .pin = PIN_STOP_CONTACT };
+static input_t in_button = { .pin = PIN_CAL_BUTTON };
 
 /* Returns true once when the contact closes (pin goes LOW) */
 static bool input_hit(input_t *in)

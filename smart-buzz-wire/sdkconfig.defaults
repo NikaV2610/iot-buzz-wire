@@ -1,3 +1,6 @@
 CONFIG_IDF_TARGET="esp32c3"
 # Log output over the USB port of the SuperMini (frees GPIO 20/21)
 CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+# SuperMini has 4 MB flash, use one big app partition
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y

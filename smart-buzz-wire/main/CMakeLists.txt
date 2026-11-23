@@ -7,5 +7,5 @@ idf_component_register(
         "src/wifi.c"
         "src/mqtt.c"
     INCLUDE_DIRS "include"
-    REQUIRES nvs_flash esp_wifi esp_event esp_netif mqtt driver esp_timer
+    REQUIRES nvs_flash esp_wifi esp_event esp_netif mqtt esp_driver_gpio esp_driver_ledc esp_timer
 )
