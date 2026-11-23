@@ -5,3 +5,6 @@ obj/
 
 # Python
 __pycache__/
+
+# Local ESP-IDF installer config
+eim_config.toml
