@@ -1,12 +1,19 @@
 #pragma once
 
-#include <stdint.h>
+/* Event numbers must match GameEventType in the web app
+   (Hotwire.Web.Web/Iot/Contracts/GameEventMessage.cs) */
+typedef enum {
+    EVENT_START                = 0,
+    EVENT_STOP                 = 1,
+    EVENT_COLLISION            = 2,
+    EVENT_PLAYER_REGISTRATION  = 3,
+    EVENT_RFID_ASSIGNED        = 4,
+    EVENT_CALIBRATION_SELECTED = 5,
+} game_event_t;
 
-void mqtt_build_topics(void);
+/* Called by wifi.c once the ESP has an IP address */
 void mqtt_start(void);
 
-void mqtt_publish_player(const char *player_uid);
-void mqtt_publish_run_start(uint32_t run_id, const char *player_uid);
-void mqtt_publish_run_end(uint32_t run_id, const char *player_uid, uint32_t time_ms, uint16_t touches);
-void mqtt_publish_run_touch(uint32_t t_ms, uint16_t count);
-void mqtt_publish_run_abort(uint32_t run_id);
+/* Sends one game event as JSON to MQTT_GAME_TOPIC.
+   rfid_tag may be "" if no player is known. */
+void mqtt_send_event(game_event_t event, const char *rfid_tag);

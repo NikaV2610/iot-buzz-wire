@@ -4,39 +4,36 @@
 #include "esp_timer.h"
 
 /* ============================================================
-   Configuration
+   WiFi / MQTT (must match the web app: Hotwire.Web appsettings.json)
    ============================================================ */
 #define WIFI_SSID       "YOUR_SSID"
 #define WIFI_PASS       "YOUR_PASSWORD"
 
-/* Public broker (for testing). Warning: anyone can read and write! */
-#define MQTT_URI        "mqtt://broker.hivemq.com:1883"
-/* For TLS e.g. "mqtts://<host>:8883" plus certificate and login (see comment in mqtt_start) */
-
-/* Unique prefix so your topics do not collide with others */
-#define TOPIC_PREFIX    "fhv-iot-groupX/buzzwire"   /* <- ADJUST */
+#define MQTT_URI        "mqtt://broker.emqx.io:1883"
+#define MQTT_GAME_TOPIC "hotwire/iot-buzz-wire/test/game"
+#define DEVICE_ID       "buzzwire-esp32c3"
 
 /* ============================================================
-   Pin assignment (according to block diagram, adjust if needed)
+   Pins ESP32-C3 SuperMini (see docs/Verkabelung.drawio)
+   Do not use GPIO 2, 8, 9 (boot pins).
+   All inputs use the internal pull-up: contact closed = LOW.
+   The metal loop on the handle is connected to GND.
    ============================================================ */
-#define PIN_LED_STRIP       4     /* WS2812B data line (best-run display) */
-#define PIN_BUZZER          25    /* PWM */
-#define PIN_WIRE            27    /* Pull-up, loop connected to GND */
-#define PIN_START_CONTACT   32    /* Pull-up */
-#define PIN_FINISH_CONTACT  33    /* Pull-up */
-#define PIN_BUTTON          26    /* Pull-up (reset/abort) */
-#define PIN_TRACKING_LED    16    /* via series resistor (transistor if needed) */
+#define PIN_WIRE            0     /* course wire */
+#define PIN_START_CONTACT   1
+#define PIN_STOP_CONTACT    3
+#define PIN_CAL_BUTTON      20    /* calibration start button */
+#define PIN_BUZZER          21    /* PWM */
 
-#define PIN_RFID_SCK        18
-#define PIN_RFID_MOSI       23
-#define PIN_RFID_MISO       19
-#define PIN_RFID_SS         5
-#define PIN_RFID_RST        22
-
-#define NUM_LEDS            60    /* PLACEHOLDER: length of the best-run strip */
+#define PIN_RFID_SCK        4
+#define PIN_RFID_MISO       5
+#define PIN_RFID_MOSI       6
+#define PIN_RFID_SS         7
+#define PIN_RFID_RST        10
 
 #define RFID_UID_LEN        24    /* max. UID string length incl. terminator */
 
+/* Milliseconds since boot */
 static inline uint32_t millis(void)
 {
     return (uint32_t)(esp_timer_get_time() / 1000);

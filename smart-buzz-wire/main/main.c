@@ -1,42 +1,30 @@
 /*
-  Smart Buzz Wire - ESP32 (ESP-IDF)
+  Smart Buzz Wire - ESP32-C3 SuperMini (ESP-IDF)
 
-  Modules:
-    config.h     pins, WiFi/MQTT settings
-    game.c       state machine and game logic
-    debounce.c   input debouncing
-    buzzer.c     PWM buzzer
-    led_display.c WS2812B best-run display
-    rfid.c       RC522 reader
-    wifi.c       WiFi station
-    mqtt.c       MQTT client and topics
+  Files:
+    include/config.h  WiFi, MQTT and pin settings
+    src/game.c        game logic (RFID -> start -> collisions -> stop)
+    src/mqtt.c        sends game events as JSON to the web app
+    src/wifi.c        WiFi connection
+    src/rfid.c        RC522 card reader
+    src/buzzer.c      buzzer sounds
 
-  Required components (see main/idf_component.yml):
-    espressif/led_strip  (WS2812B via RMT)
-    abobija/rc522        (RC522 via SPI)
+  The camera (camera-tracker) sends the positions itself,
+  the ESP only sends game events.
 */
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "nvs_flash.h"
 
-#include "config.h"
 #include "buzzer.h"
 #include "game.h"
-#include "led_display.h"
-#include "mqtt.h"
 #include "rfid.h"
 #include "wifi.h"
 
-/* PLACEHOLDER: show player time on LED panel / 7-segment display.
-   RUNNING: game_elapsed_ms(), FINISHED: run duration */
-static void time_display_update(void)
-{
-}
-
 void app_main(void)
 {
-    /* NVS is required by the WiFi driver */
+    /* NVS is needed by the WiFi driver */
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -44,25 +32,14 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(err);
 
-    mqtt_build_topics();
-    game_init();
     buzzer_init();
-    strip_init();
     rfid_init();
-    wifi_init();   /* MQTT starts automatically once an IP address is available */
-
-    uint32_t last_display = 0;
+    game_init();
+    wifi_init();   /* MQTT starts automatically once WiFi is connected */
 
     while (1) {
         game_update();
         buzzer_update();
-
-        if (millis() - last_display >= 50) {
-            last_display = millis();
-            best_run_led_update(game_is_running(), game_elapsed_ms(), game_best_run_time());
-            time_display_update();
-        }
-
-        vTaskDelay(1);   /* 1 tick = 1 ms at CONFIG_FREERTOS_HZ=1000 (sdkconfig.defaults); pdMS_TO_TICKS(1) would be 0 at 100 Hz -> watchdog */
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }

@@ -42,7 +42,7 @@ void rfid_init(void)
     uid_queue = xQueueCreate(4, sizeof(char[RFID_UID_LEN]));
 
     rc522_spi_config_t driver_cfg = {
-        .host_id = SPI3_HOST,
+        .host_id = SPI2_HOST,   /* ESP32-C3 only has SPI2 */
         .bus_config = &(spi_bus_config_t){
             .miso_io_num = PIN_RFID_MISO,
             .mosi_io_num = PIN_RFID_MOSI,
