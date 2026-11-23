@@ -1,0 +1,29 @@
+﻿@inherits LayoutComponentBase
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <div class="top-row-inner">
+                <div>
+                    <div class="app-title">Hotwire Interface</div>
+                    <div class="app-subtitle">Live Control · Highscore · Replay</div>
+                </div>
+                <a class="top-link" href="https://learn.microsoft.com/aspnet/core/" target="_blank">ASP.NET Docs</a>
+            </div>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>

@@ -1,0 +1,401 @@
+@page "/debug-runs"
+@using Hotwire.Web.Web.Data
+@using Hotwire.Web.Web.Models
+@using Hotwire.Web.Web.Services
+@using Microsoft.EntityFrameworkCore
+@using System.Text.Json
+
+@inject IDbContextFactory<GameDbContext> DbFactory
+@inject CalibrationStateService CalibrationState
+@inject IWebHostEnvironment Env
+
+<div class="page-header">
+	<h1 class="page-title">Debug Runs</h1>
+	<p class="page-subtitle">Create, inspect, and clean up synthetic run data.</p>
+</div>
+
+@if (CalibrationState.ActiveCalibrationId is not null)
+{
+	<div class="meta-grid">
+		<div class="meta-item">
+			<span class="meta-label">Active Calibration</span>
+			<span class="meta-value">@CalibrationState.ActiveCalibrationId (@CalibrationState.ActiveCalibrationName)</span>
+		</div>
+	</div>
+}
+else
+{
+	<p class="text-warning"><strong>No active calibration selected.</strong> Open /track first.</p>
+}
+
+@if (!string.IsNullOrWhiteSpace(Message))
+{
+	<div class="alert alert-info">@Message</div>
+}
+
+<div class="surface-card mb-3">
+	<EditForm Model="@NewRun" OnValidSubmit="CreateRunAsync">
+		<DataAnnotationsValidator />
+
+		<div class="row g-3 mb-3">
+			<div class="col-md-4">
+				<label class="form-label">Player</label>
+				<InputSelect class="form-select" @bind-Value="NewRun.PlayerId">
+					<option value="0">-- select player --</option>
+					@foreach (var p in Players)
+					{
+						<option value="@p.Id">@p.FirstName @p.LastName (@(p.IsActive ? "Active" : "Inactive"))</option>
+					}
+				</InputSelect>
+			</div>
+
+			<div class="col-md-4">
+				<label class="form-label">Duration (seconds)</label>
+				<InputNumber class="form-control" @bind-Value="NewRun.DurationSeconds" />
+			</div>
+
+			<div class="col-md-4">
+				<label class="form-label">Collisions</label>
+				<InputNumber class="form-control" @bind-Value="NewRun.Collisions" />
+			</div>
+		</div>
+
+		<div class="form-check mb-3">
+			<InputCheckbox class="form-check-input" id="completedCheck" @bind-Value="NewRun.Completed" />
+			<label class="form-check-label" for="completedCheck">Completed</label>
+		</div>
+
+		<div class="page-actions">
+			<button class="btn btn-primary" type="submit">Create test run</button>
+			<button class="btn btn-warning" type="button" @onclick="CreateRandomRunsAsync">Create 10 random runs</button>
+			<button class="btn btn-outline-danger" type="button" @onclick="PromptDeleteAllRuns">Delete all runs</button>
+			<button class="btn btn-secondary" type="button" @onclick="LoadDataAsync">Reload</button>
+		</div>
+	</EditForm>
+</div>
+
+@if (ShowDeleteAllConfirm)
+{
+	<div class="alert alert-warning mt-3">
+		<strong>Confirm:</strong> This will delete all runs and all related position data.
+		<div class="mt-2">
+			<button class="btn btn-danger btn-sm" @onclick="DeleteAllRunsAsync">Yes, delete all</button>
+			<button class="btn btn-secondary btn-sm ms-2" @onclick="CancelDeleteAllRuns">Cancel</button>
+		</div>
+	</div>
+}
+
+<div class="surface-card">
+<h3 class="h5 mb-3">Latest runs (@Runs.Count)</h3>
+@if (Runs.Count == 0)
+{
+	<div class="empty-state">No runs found.</div>
+}
+else
+{
+	<div class="table-wrap">
+		<table class="table table-striped mb-0">
+			<thead>
+				<tr>
+					<th>Id</th>
+					<th>PlayerId</th>
+					<th>Start</th>
+					<th>End</th>
+					<th>Duration</th>
+					<th>Collisions</th>
+					<th>Completed</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var r in Runs)
+				{
+					<tr>
+						<td>@r.Id</td>
+						<td>@r.PlayerId</td>
+						<td>@r.StartTime.ToString("u")</td>
+						<td>@(r.EndTime?.ToString("u") ?? "-")</td>
+						<td>@r.Duration</td>
+						<td>@(r.Collisions?.ToString() ?? "-")</td>
+						<td>@r.Completed</td>
+						<td>
+							<button class="btn btn-sm btn-danger" @onclick="() => DeleteRunAsync(r.Id)">Delete</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+</div>
+
+@code {
+	private List<Player> Players = [];
+	private List<GameRun> Runs = [];
+	private string? Message;
+	private bool ShowDeleteAllConfirm;
+
+	private NewRunInput NewRun = new()
+	{
+		DurationSeconds = 10,
+		Collisions = 0,
+		Completed = true
+	};
+
+	private sealed class NewRunInput
+	{
+		public int PlayerId { get; set; }
+		public double DurationSeconds { get; set; }
+		public int? Collisions { get; set; }
+		public bool Completed { get; set; }
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadDataAsync();
+	}
+
+	private async Task LoadDataAsync()
+	{
+		await using var db = await DbFactory.CreateDbContextAsync();
+
+		Players = await db.Players
+			.OrderBy(p => p.FirstName)
+			.ThenBy(p => p.LastName)
+			.ToListAsync();
+
+		Runs = await db.GameRuns
+			.OrderByDescending(r => r.Id)
+			.Take(25)
+			.ToListAsync();
+	}
+
+	private async Task CreateRunAsync()
+	{
+		if (NewRun.PlayerId <= 0)
+		{
+			Message = "Please select a player.";
+			return;
+		}
+
+		if (NewRun.DurationSeconds <= 0)
+		{
+			Message = "Duration must be greater than 0.";
+			return;
+		}
+
+		if (CalibrationState.ActiveCalibrationId is null)
+		{
+			Message = "No active calibration selected.";
+			return;
+		}
+
+		var now = DateTime.UtcNow;
+
+		var run = new GameRun
+		{
+			PlayerId = NewRun.PlayerId,
+			CalibrationId = CalibrationState.ActiveCalibrationId.Value,
+			Duration = NewRun.DurationSeconds,
+			Collisions = NewRun.Collisions,
+			Completed = NewRun.Completed,
+			StartTime = now.AddSeconds(-NewRun.DurationSeconds),
+			EndTime = NewRun.Completed ? now : null
+		};
+
+		await using var db = await DbFactory.CreateDbContextAsync();
+		db.GameRuns.Add(run);
+		await db.SaveChangesAsync();
+
+		Message = $"Test run created for player #{NewRun.PlayerId}.";
+
+		NewRun = new NewRunInput
+		{
+			PlayerId = NewRun.PlayerId,
+			DurationSeconds = 10,
+			Collisions = 0,
+			Completed = true
+		};
+
+		await LoadDataAsync();
+	}
+
+	private async Task CreateRandomRunsAsync()
+	{
+		await using var db = await DbFactory.CreateDbContextAsync();
+
+		if (CalibrationState.ActiveCalibrationId is null)
+		{
+			Message = "No active calibration selected.";
+			return;
+		}
+
+		var calibrationPath = Path.Combine(Env.WebRootPath, "data", "calibration.json");
+		if (!File.Exists(calibrationPath))
+		{
+			Message = "Calibration JSON not found.";
+			return;
+		}
+
+		CalibrationData? calibration;
+		await using (var stream = File.OpenRead(calibrationPath))
+		{
+			calibration = await JsonSerializer.DeserializeAsync<CalibrationData>(stream, new JsonSerializerOptions
+			{
+				PropertyNameCaseInsensitive = true
+			});
+		}
+
+		if (calibration is null || calibration.Points.Count < 2)
+		{
+			Message = "Calibration JSON has too few points.";
+			return;
+		}
+
+		var playerIds = await db.Players
+			.Where(p => p.IsActive)
+			.Select(p => p.Id)
+			.ToListAsync();
+
+		if (playerIds.Count == 0)
+		{
+			Message = "No active players available.";
+			return;
+		}
+
+		var now = DateTime.UtcNow;
+		var runs = new List<GameRun>();
+
+		for (var i = 0; i < 10; i++)
+		{
+			var duration = Math.Round(Random.Shared.NextDouble() * 20 + 5, 3); // 5s - 25s
+			var collisions = Random.Shared.Next(0, 6);
+			var completed = Random.Shared.NextDouble() > 0.1; // mostly completed
+			var end = now.AddSeconds(-i * 5);
+			var start = end.AddSeconds(-duration);
+
+			runs.Add(new GameRun
+			{
+				PlayerId = playerIds[Random.Shared.Next(playerIds.Count)],
+				CalibrationId = CalibrationState.ActiveCalibrationId.Value,
+				Duration = duration,
+				Collisions = collisions,
+				Completed = completed,
+				StartTime = start,
+				EndTime = completed ? end : null
+			});
+		}
+
+		db.GameRuns.AddRange(runs);
+		await db.SaveChangesAsync();
+
+		var allPositions = new List<PositionData>();
+
+		foreach (var run in runs)
+		{
+			var runPoints = calibration.Points;
+
+			var totalTicks = (run.EndTime ?? run.StartTime).Ticks - run.StartTime.Ticks;
+			if (totalTicks <= 0) totalTicks = TimeSpan.FromSeconds(1).Ticks;
+
+			for (int i = 0; i < runPoints.Count; i++)
+			{
+				var source = runPoints[i];
+
+				// klein wenig Noise, damit nicht alle Runs exakt gleich sind
+				var noiseX = (Random.Shared.NextDouble() - 0.5) * 2.0; // -1..+1
+				var noiseY = (Random.Shared.NextDouble() - 0.5) * 2.0;
+
+				var t = (double)i / (runPoints.Count - 1);
+				var ts = new DateTime(run.StartTime.Ticks + (long)(totalTicks * t), DateTimeKind.Utc);
+
+				allPositions.Add(new PositionData
+				{
+					GameRunId = run.Id,
+					X = (int)Math.Round(source.X + noiseX),
+					Y = (int)Math.Round(source.Y + noiseY),
+					TimeStamp = ts
+				});
+			}
+		}
+
+		db.PositionDatas.AddRange(allPositions);
+		await db.SaveChangesAsync();
+
+		Message = $"Created {runs.Count} random runs and {allPositions.Count} position points.";
+		await LoadDataAsync();
+	}
+
+	private async Task DeleteRunAsync(int runId)
+	{
+		await using var db = await DbFactory.CreateDbContextAsync();
+
+		var positions = await db.PositionDatas
+			.Where(p => p.GameRunId == runId)
+			.ToListAsync();
+
+		if (positions.Count > 0)
+		{
+			db.PositionDatas.RemoveRange(positions);
+		}
+
+		var run = await db.GameRuns.FirstOrDefaultAsync(r => r.Id == runId);
+		if (run is null)
+		{
+			Message = $"Run #{runId} not found.";
+			return;
+		}
+
+		db.GameRuns.Remove(run);
+		await db.SaveChangesAsync();
+
+		Message = $"Run #{runId} deleted.";
+		await LoadDataAsync();
+	}
+
+	private void PromptDeleteAllRuns()
+	{
+		ShowDeleteAllConfirm = true;
+	}
+
+	private void CancelDeleteAllRuns()
+	{
+		ShowDeleteAllConfirm = false;
+	}
+
+	private async Task DeleteAllRunsAsync()
+	{
+		await using var db = await DbFactory.CreateDbContextAsync();
+
+		var allPositions = await db.PositionDatas.ToListAsync();
+		if (allPositions.Count > 0)
+		{
+			db.PositionDatas.RemoveRange(allPositions);
+		}
+
+		var allRuns = await db.GameRuns.ToListAsync();
+		if (allRuns.Count > 0)
+		{
+			db.GameRuns.RemoveRange(allRuns);
+		}
+
+		await db.SaveChangesAsync();
+
+		ShowDeleteAllConfirm = false;
+		Message = "All runs and related position data deleted.";
+		await LoadDataAsync();
+	}
+
+	private sealed class CalibrationData
+	{
+		public string TrackName { get; set; } = "";
+		public List<CalibrationPoint> Points { get; set; } = [];
+	}
+
+	private sealed class CalibrationPoint
+	{
+		public double X { get; set; }
+		public double Y { get; set; }
+		public DateTime Timestamp { get; set; }
+	}
+}

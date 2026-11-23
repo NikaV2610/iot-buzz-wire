@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Hotwire.Web.ApiService/Hotwire.Web.ApiService.csproj" />
+  <Project Path="Hotwire.Web.AppHost/Hotwire.Web.AppHost.csproj" />
+  <Project Path="Hotwire.Web.ServiceDefaults/Hotwire.Web.ServiceDefaults.csproj" />
+  <Project Path="Hotwire.Web.Web/Hotwire.Web.Web.csproj" />
+</Solution>

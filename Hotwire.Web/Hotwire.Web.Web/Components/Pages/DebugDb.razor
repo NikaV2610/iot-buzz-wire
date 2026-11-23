@@ -1,0 +1,181 @@
+@page "/debug-db"
+@using Hotwire.Web.Web.Data
+@using Hotwire.Web.Web.Models
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<GameDbContext> DbFactory
+
+<PageTitle>Debug DB</PageTitle>
+
+<div class="page-header">
+	<h1 class="page-title">Debug DB</h1>
+	<p class="page-subtitle">Inspect database entities and quickly seed sample data.</p>
+</div>
+
+<div class="page-actions">
+	<button class="btn btn-primary" @onclick="ReloadAsync">Reload</button>
+	<button class="btn btn-secondary" @onclick="AddSamplePlayerAsync">Add sample player</button>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(StatusMessage))
+{
+	<div class="alert alert-info">@StatusMessage</div>
+}
+
+<div class="surface-card mb-3">
+<h3 class="h5 mb-3">Players (@Players.Count)</h3>
+@if (Players.Count == 0)
+{
+	<div class="empty-state">No players found.</div>
+}
+else
+{
+	<div class="table-wrap">
+	<table class="table table-striped mb-0">
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>RFID</th>
+				<th>First Name</th>
+				<th>Last Name</th>
+				<th>CreatedAt (UTC)</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var p in Players)
+			{
+				<tr>
+					<td>@p.Id</td>
+					<td>@p.RfidTag</td>
+					<td>@p.FirstName</td>
+					<td>@p.LastName</td>
+					<td>@p.CreatedAt.ToString("u")</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+	</div>
+}
+</div>
+
+<div class="surface-card mb-3">
+<h3 class="h5 mb-3">Game Runs (@Runs.Count)</h3>
+@if (Runs.Count == 0)
+{
+	<div class="empty-state">No runs found.</div>
+}
+else
+{
+	<div class="table-wrap">
+	<table class="table table-striped mb-0">
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>PlayerId</th>
+				<th>CalibrationId</th>
+				<th>Start</th>
+				<th>End</th>
+				<th>Duration</th>
+				<th>Collisions</th>
+				<th>Completed</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var r in Runs)
+			{
+				<tr>
+					<td>@r.Id</td>
+					<td>@r.PlayerId</td>
+					<td>@r.CalibrationId</td>
+					<td>@r.StartTime.ToString("u")</td>
+					<td>@(r.EndTime?.ToString("u") ?? "-")</td>
+					<td>@r.Duration</td>
+					<td>@(r.Collisions?.ToString() ?? "-")</td>
+					<td>@r.Completed</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+	</div>
+}
+</div>
+
+<div class="surface-card">
+<h3 class="h5 mb-3">Track Calibrations (@Calibrations.Count)</h3>
+@if (Calibrations.Count == 0)
+{
+	<div class="empty-state">No calibrations found.</div>
+}
+else
+{
+	<div class="table-wrap">
+	<table class="table table-striped mb-0">
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>Name</th>
+				<th>CreatedAt (UTC)</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var c in Calibrations)
+			{
+				<tr>
+					<td>@c.Id</td>
+					<td>@c.Name</td>
+					<td>@c.CreatedAt.ToString("u")</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+	</div>
+}
+</div>
+
+@code {
+	private List<Player> Players { get; set; } = [];
+	private List<GameRun> Runs { get; set; } = [];
+	private List<TrackCalibration> Calibrations { get; set; } = [];
+	private string? StatusMessage;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await ReloadAsync();
+	}
+
+	private async Task ReloadAsync()
+	{
+		await using var db = await DbFactory.CreateDbContextAsync();
+
+		Players = await db.Players
+			.OrderByDescending(p => p.CreatedAt)
+			.ToListAsync();
+
+		Runs = await db.GameRuns
+			.OrderByDescending(r => r.StartTime)
+			.ToListAsync();
+
+		Calibrations = await db.TrackCalibration
+			.OrderByDescending(c => c.CreatedAt)
+			.ToListAsync();
+
+		StatusMessage = $"Loaded: {Players.Count} players, {Runs.Count} runs, {Calibrations.Count} calibrations.";
+	}
+
+	private async Task AddSamplePlayerAsync()
+	{
+		var randomSuffix = Guid.NewGuid().ToString("N")[..8];
+
+		await using var db = await DbFactory.CreateDbContextAsync();
+		db.Players.Add(new Player
+		{
+			FirstName = "Test",
+			LastName = randomSuffix,
+			RfidTag = $"RFID-{randomSuffix}",
+			CreatedAt = DateTime.UtcNow
+		});
+
+		await db.SaveChangesAsync();
+		await ReloadAsync();
+		StatusMessage = "Sample player has been created.";
+	}
+}

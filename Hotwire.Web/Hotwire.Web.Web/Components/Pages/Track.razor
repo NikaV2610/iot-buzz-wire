@@ -1,0 +1,448 @@
+﻿@page "/track"
+
+@using Hotwire.Web.Web.Data
+@using Hotwire.Web.Web.Services
+@using Hotwire.Web.Web.Models
+@using Microsoft.EntityFrameworkCore
+@using System.Globalization
+@using System.Text.Json
+
+@inject IDbContextFactory<GameDbContext> DbFactory
+@inject IWebHostEnvironment Env
+@inject CalibrationStateService CalibrationState
+
+<div class="page-header">
+	<h1 class="page-title">Track</h1>
+	<p class="page-subtitle">Calibration contour and best-run replay for the active track.</p>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+	<div class="alert alert-danger">@ErrorMessage</div>
+}
+else if (Calibration is null)
+{
+	<p>Loading calibration data...</p>
+}
+else
+{
+	<div class="alert alert-success">Calibration loaded.</div>
+
+	<div class="meta-grid">
+		<div class="meta-item">
+			<span class="meta-label">Track</span>
+			<span class="meta-value">@Calibration.TrackName</span>
+		</div>
+		<div class="meta-item">
+			<span class="meta-label">Points</span>
+			<span class="meta-value">@Calibration.Points.Count</span>
+		</div>
+	</div>
+
+	<div class="page-actions">
+		<button class="btn btn-primary" @onclick="LoadBestReplayAsync">
+			Load best run for this calibration
+		</button>
+		<button class="btn btn-success" @onclick="StartReplayAsync" disabled="@(ScaledReplayPoints.Count < 2 || IsReplayRunning)">
+			Start Replay
+		</button>
+		<button class="btn btn-outline-secondary" @onclick="StopReplay" disabled="@(!IsReplayRunning)">
+			Stop Replay
+		</button>
+	</div>
+
+	@if (!string.IsNullOrWhiteSpace(ReplayMessage))
+	{
+		<div class="alert alert-info">@ReplayMessage</div>
+	}
+
+	@if (CalibrationState.ActiveCalibrationId is not null)
+	{
+		<div class="meta-grid">
+			<div class="meta-item">
+				<span class="meta-label">Active Calibration ID</span>
+				<span class="meta-value">@CalibrationState.ActiveCalibrationId</span>
+			</div>
+			<div class="meta-item">
+				<span class="meta-label">Active Calibration Name</span>
+				<span class="meta-value">@CalibrationState.ActiveCalibrationName</span>
+			</div>
+		</div>
+	}
+
+	@if (Calibration.Points.Count > 1)
+	{
+		<div class="meta-grid">
+			<div class="meta-item">
+				<span class="meta-label">First timestamp</span>
+				<span class="meta-value">@Calibration.Points.First().Timestamp.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss.fff 'UTC'")</span>
+			</div>
+			<div class="meta-item">
+				<span class="meta-label">Last timestamp</span>
+				<span class="meta-value">@Calibration.Points.Last().Timestamp.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss.fff 'UTC'")</span>
+			</div>
+		</div>
+
+		<div class="track-canvas mt-2">
+			<svg viewBox="0 0 1000 700" style="width:100%; height:70vh;">
+				<polyline points="@PolylinePoints"
+						  fill="none"
+						  stroke="#1b6ec2"
+						  stroke-width="3"
+						  stroke-linejoin="round"
+						  stroke-linecap="round"/>
+
+				@if (ScaledReplayPoints.Count > 1)
+				{
+					<polyline points="@ReplayPolylinePoints"
+							  fill="none"
+							  stroke="#dc3545"
+							  stroke-width="2"
+							  stroke-linejoin="round"
+							  stroke-linecap="round"
+							  stroke-dasharray="6 4" />
+				}
+
+				@if (ReplayDotX is not null && ReplayDotY is not null)
+				{
+					@if (IsCollisionFrame)
+					{
+						<circle cx="@ReplayDotXText"
+								cy="@ReplayDotYText"
+								r="14"
+								fill="#ff4d4f"
+								fill-opacity="0.32">
+							<animate attributeName="r"
+									 from="14"
+									 to="24"
+									 dur="220ms"
+									 begin="0s"
+									 fill="freeze" />
+							<animate attributeName="fill-opacity"
+									 from="0.32"
+									 to="0"
+									 dur="220ms"
+									 begin="0s"
+									 fill="freeze" />
+						</circle>
+					}
+
+					<circle cx="@ReplayDotXText"
+							cy="@ReplayDotYText"
+							r="10"
+							fill="@ReplayDotFillColor"
+							stroke="white"
+							stroke-width="3" />
+				}
+			</svg>
+		</div>
+	}
+}
+
+@code {
+	private const double SvgWidth = 1000;
+	private const double SvgHeight = 700;
+	private const double Padding = 30;
+
+	private CalibrationData? Calibration;
+	private int? BestRunId;
+	private string? ReplayMessage;
+	private string? ErrorMessage;
+	private bool IsReplayRunning;
+	private CancellationTokenSource? ReplayCts;
+	private double? ReplayDotX;
+	private double? ReplayDotY;
+
+	private string PolylinePoints =>
+		string.Join(" ", ScaledPoints.Select(p =>
+			$"{p.X.ToString("F2", CultureInfo.InvariantCulture)}," +
+			$"{p.Y.ToString("F2", CultureInfo.InvariantCulture)}"));
+	private string ReplayPolylinePoints =>
+		string.Join(" ", ScaledReplayPoints.Select(p =>
+			$"{p.X.ToString("F2", CultureInfo.InvariantCulture)},"+
+			$"{p.Y.ToString("F2", CultureInfo.InvariantCulture)}"));
+
+	private string ReplayDotXText => (ReplayDotX ?? 0d).ToString("F2", CultureInfo.InvariantCulture);
+	private string ReplayDotYText => (ReplayDotY ?? 0d).ToString("F2", CultureInfo.InvariantCulture);
+	private string ReplayDotFillColor => IsCollisionFrame ? "#ff4d4f" : "#1b6ec2";
+
+
+	private List<(double X, double Y)> ScaledPoints = [];
+	private List<(double X, double Y)> ScaledReplayPoints = [];
+	private List<PositionData> BestRunPositions = [];
+	private HashSet<int> CollisionReplayIndices = [];
+	private int ReplayCollisionCount;
+	private bool IsCollisionFrame;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadCalibrationAsync();
+	}
+
+	private async Task LoadCalibrationAsync()
+	{
+		try
+		{
+			var filePath = Path.Combine(Env.WebRootPath, "data", "calibration.json");
+
+			if (!File.Exists(filePath))
+			{
+				ErrorMessage = $"File not found";
+				return;
+			}
+
+			await using var stream = File.OpenRead(filePath);
+			Calibration = await JsonSerializer.DeserializeAsync<CalibrationData>(stream, new JsonSerializerOptions
+			{
+				PropertyNameCaseInsensitive = true
+			});
+
+			if (Calibration is null)
+			{
+				ErrorMessage = "JSON could not be deserialized";
+			}
+
+			if (Calibration is not null)
+			{
+				await using var db = await DbFactory.CreateDbContextAsync();
+
+				var calibration = await db.TrackCalibration
+					.FirstOrDefaultAsync(c => c.Name == Calibration.TrackName);
+
+				if (calibration is null)
+				{
+					calibration = new TrackCalibration
+					{
+						Name = Calibration.TrackName,
+						CreatedAt = DateTime.UtcNow
+					};
+
+					db.TrackCalibration.Add(calibration);
+					await db.SaveChangesAsync();
+				}
+
+				CalibrationState.SetActiveCalibration(calibration.Id, calibration.Name);
+
+				BuildScaledPoints();
+			}
+		}
+		catch (Exception ex)
+		{
+			ErrorMessage = $"Error: {ex.Message}";
+		}
+	}
+
+	private async Task LoadBestReplayAsync()
+	{
+		if (CalibrationState.ActiveCalibrationId is null)
+		{
+			ReplayMessage = "No active calibration selected.";
+			return;
+		}
+
+		await using var db = await DbFactory.CreateDbContextAsync();
+
+		var bestRun = await db.GameRuns
+			.Where(r => r.Completed &&
+						r.CalibrationId == CalibrationState.ActiveCalibrationId.Value)
+			.OrderBy(r => r.Duration)
+			.FirstOrDefaultAsync();
+
+		if (bestRun is null)
+		{
+			BestRunId = null;
+			BestRunPositions = [];
+			ReplayCollisionCount = 0;
+			CollisionReplayIndices.Clear();
+			IsCollisionFrame = false;
+			ReplayMessage = "No highscore found for the active calibration.";
+			return;
+		}
+
+		BestRunId = bestRun.Id;
+
+		BestRunPositions = await db.PositionDatas
+			.Where(p => p.GameRunId == bestRun.Id)
+			.OrderBy(p => p.TimeStamp)
+			.ToListAsync();
+
+		ReplayCollisionCount = Math.Max(0, bestRun.Collisions ?? 0);
+		BuildCollisionReplayIndices();
+
+		BuildScaledReplayPoints();
+		IsReplayRunning = false;
+		ReplayDotX = null;
+		ReplayDotY = null;
+		IsCollisionFrame = false;
+
+		ReplayMessage = BestRunPositions.Count == 0
+			? $"Best run #{bestRun.Id} found, but without position data."
+			: $"Best run #{bestRun.Id} loaded ({BestRunPositions.Count} points).";
+	}
+
+	private async Task StartReplayAsync()
+	{
+		if (BestRunPositions.Count < 2 || ScaledReplayPoints.Count < 2)
+		{
+			ReplayMessage = "No replay data loaded.";
+			return;
+		}
+
+		StopReplay();
+		ReplayCts = new CancellationTokenSource();
+		var token = ReplayCts.Token;
+
+		IsReplayRunning = true;
+		ReplayDotX = ScaledReplayPoints[0].X;
+		ReplayDotY = ScaledReplayPoints[0].Y;
+		IsCollisionFrame = CollisionReplayIndices.Contains(0);
+		await InvokeAsync(StateHasChanged);
+
+		try
+		{
+			for (int i = 1; i < BestRunPositions.Count; i++)
+			{
+				token.ThrowIfCancellationRequested();
+
+				var prev = BestRunPositions[i - 1].TimeStamp;
+				var curr = BestRunPositions[i].TimeStamp;
+				var delay = curr - prev;
+
+				if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
+				if (delay > TimeSpan.FromMilliseconds(250)) delay = TimeSpan.FromMilliseconds(250);
+
+				await Task.Delay(delay, token);
+				ReplayDotX = ScaledReplayPoints[i].X;
+				ReplayDotY = ScaledReplayPoints[i].Y;
+				IsCollisionFrame = CollisionReplayIndices.Contains(i);
+				await InvokeAsync(StateHasChanged);
+			}
+
+			ReplayMessage = "Replay finished.";
+		}
+		catch (OperationCanceledException)
+		{
+			ReplayMessage = "Replay stopped.";
+		}
+		finally
+		{
+			IsReplayRunning = false;
+			ReplayDotX = null;
+			ReplayDotY = null;
+			IsCollisionFrame = false;
+			ReplayCts?.Dispose();
+			ReplayCts = null;
+			await InvokeAsync(StateHasChanged);
+		}
+	}
+
+	private void BuildCollisionReplayIndices()
+	{
+		CollisionReplayIndices.Clear();
+
+		if (ReplayCollisionCount <= 0 || BestRunPositions.Count < 2)
+		{
+			return;
+		}
+
+		var maxIndex = BestRunPositions.Count - 1;
+		for (var hit = 1; hit <= ReplayCollisionCount; hit++)
+		{
+			var mappedIndex = (int)Math.Round((double)hit / (ReplayCollisionCount + 1) * maxIndex);
+			mappedIndex = Math.Clamp(mappedIndex, 1, maxIndex);
+			CollisionReplayIndices.Add(mappedIndex);
+		}
+	}
+
+	private void StopReplay()
+	{
+		ReplayCts?.Cancel();
+	}
+
+	private void BuildScaledPoints()
+	{
+		ScaledPoints.Clear();
+
+		if (Calibration is null || Calibration.Points.Count == 0)
+			return;
+
+		var ordered = Calibration.Points
+			.OrderBy(p => p.Timestamp)
+			.ToList();
+
+		// Keep the contour in real capture order (timestamp),
+		// so replay data aligns with the displayed calibration path.
+		var minX = ordered.Min(p => p.X);
+		var maxX = ordered.Max(p => p.X);
+		var minY = ordered.Min(p => p.Y);
+		var maxY = ordered.Max(p => p.Y);
+
+		var srcWidth = Math.Max(1, maxX - minX);
+		var srcHeight = Math.Max(1, maxY - minY);
+
+		var targetWidth = SvgWidth - (2 * Padding);
+		var targetHeight = SvgHeight - (2 * Padding);
+
+		var scale = Math.Min(targetWidth / srcWidth, targetHeight / srcHeight);
+
+		var drawWidth = srcWidth * scale;
+		var drawHeight = srcHeight * scale;
+
+		var offsetX = (SvgWidth - drawWidth) / 2.0;
+		var offsetY = (SvgHeight - drawHeight) / 2.0;
+
+		foreach (var p in ordered)
+		{
+			var x = offsetX + (p.X - minX) * scale;
+			var y = SvgHeight - (offsetY + (p.Y - minY) * scale);
+
+			ScaledPoints.Add((x, y));
+		}
+	}
+
+	private void BuildScaledReplayPoints()
+	{
+		ScaledReplayPoints.Clear();
+
+		if (Calibration is null || Calibration.Points.Count == 0 || BestRunPositions.Count == 0)
+			return;
+
+		var minX = Calibration.Points.Min(p => p.X);
+		var maxX = Calibration.Points.Max(p => p.X);
+		var minY = Calibration.Points.Min(p => p.Y);
+		var maxY = Calibration.Points.Max(p => p.Y);
+
+		var srcWidth = Math.Max(1, maxX - minX);
+		var srcHeight = Math.Max(1, maxY - minY);
+
+		var targetWidth = SvgWidth - (2 * Padding);
+		var targetHeight = SvgHeight - (2 * Padding);
+
+		var scale = Math.Min(targetWidth / srcWidth, targetHeight / srcHeight);
+		var drawWidth = srcWidth * scale;
+		var drawHeight = srcHeight * scale;
+
+		var offsetX = (SvgWidth - drawWidth) / 2.0;
+		var offsetY = (SvgHeight - drawHeight) / 2.0;
+
+		foreach (var p in BestRunPositions)
+		{
+			var x = offsetX + (p.X - minX) * scale;
+			var y = SvgHeight - (offsetY + (p.Y - minY) * scale);
+			ScaledReplayPoints.Add((x, y));
+		}
+	}
+
+	private sealed class CalibrationData
+	{
+		public string TrackName { get; set; } = "";
+		public List<TrackPoint> Points { get; set; } = [];
+	}
+
+	private sealed class TrackPoint
+	{
+		public double X { get; set; }
+		public double Y { get; set; }
+		public DateTime Timestamp { get; set; }
+	}
+}

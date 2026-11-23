@@ -1,0 +1,286 @@
+@page "/players"
+
+@inject IDbContextFactory<GameDbContext> DbFactory
+
+@using Hotwire.Web.Web.Data
+@using Hotwire.Web.Web.Models
+@using Microsoft.EntityFrameworkCore
+
+<div class="page-header">
+    <h1 class="page-title">Players</h1>
+    <p class="page-subtitle">Manage player identities and RFID assignments.</p>
+</div>
+
+<div class="surface-card mb-3">
+    <h3 class="h5 mb-3">Add new player</h3>
+
+    <EditForm Model="@NewPlayer" OnValidSubmit="@CreatePlayerAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-2">
+            <label class="form-label">First Name</label>
+            <InputText class="form-control" @bind-Value="NewPlayer.FirstName" />
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label">Last Name</label>
+            <InputText class="form-control" @bind-Value="NewPlayer.LastName"/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">RFID</label>
+            <InputText class="form-control" @bind-Value="NewPlayer.RfidTag"/>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save player</button>
+    </EditForm>
+</div>
+
+<div class="surface-card">
+    <h3 class="h5 mb-3">List</h3>
+
+@if (AllPlayers.Count == 0)
+{
+    <div class="empty-state">No players found.</div>
+}
+else
+{
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>RFID</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in AllPlayers)
+                {
+                    <tr>
+                        <td>@p.Id</td>
+                        <td>@p.FirstName @p.LastName</td>
+                        <td>@p.RfidTag</td>
+                        <td>
+                            @if (p.IsActive)
+                            {
+                                <span class="status-pill is-active">Active</span>
+                            }
+                            else
+                            {
+                                <span class="status-pill is-inactive">Inactive</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!p.IsActive)
+                            {
+                                <button class="btn btn-dark btn-sm me-2"
+                                        @onclick="() => OpenReactivationPopup(p.Id)">
+                                    Reactivate
+                                </button>
+                            }
+                            <button class="btn btn-danger btn-sm"
+                                    @onclick="() => DeletePlayerAsync(p.Id)">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+</div>
+
+@if (ShowReactivationPopup)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reactivate player</h5>
+                    <button type="button" class="btn-close" @onclick="CloseReactivationPopup"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">New RFID</label>
+                    <InputText class="form-control" @bind-Value="ReactivationRfid" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseReactivationPopup">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="ConfirmReactivationAsync">Reactivate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Player> AllPlayers = [];
+    private Player NewPlayer = new()
+    {
+        FirstName = "",
+        LastName = "",
+        RfidTag = "",
+        CreatedAt = DateTime.UtcNow
+    };
+
+    private bool ShowReactivationPopup;
+    private int? ReactivationPlayerId;
+    private string ReactivationRfid = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPlayersAsync();
+    }
+
+    private async Task LoadPlayersAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        AllPlayers = await db.Players
+            .OrderByDescending(p => p.Id)
+            .ToListAsync();
+    }
+
+    private async Task CreatePlayerAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        // Normalize RFID
+        var normalizedRfid = string.IsNullOrWhiteSpace(NewPlayer.RfidTag)
+            ? null
+            : NewPlayer.RfidTag.Trim();
+
+        // If RFID exists, find previous owners and deactivate them
+        if (!string.IsNullOrEmpty(normalizedRfid))
+        {
+            var existingOwners = await db.Players
+                .Where(p => p.RfidTag == normalizedRfid)
+                .ToListAsync();
+
+            foreach (var owner in existingOwners)
+            {
+                owner.IsActive = false;
+                owner.DeactivatedAt = DateTime.UtcNow;
+                owner.RfidTag = null;
+            }
+
+            if (existingOwners.Count > 0)
+            {
+                await db.SaveChangesAsync();
+            }
+        }
+
+        // Activate new player
+        var playerToCreate = new Player
+            {
+                FirstName = NewPlayer.FirstName.Trim(),
+                LastName = NewPlayer.LastName.Trim(),
+                RfidTag = normalizedRfid,
+                IsActive = true,
+                DeactivatedAt = null,
+                CreatedAt = DateTime.UtcNow
+            };
+
+        db.Players.Add(playerToCreate);
+
+        // Save
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        // Update UI
+        NewPlayer = new Player
+        {
+            FirstName = "",
+            LastName = "",
+            RfidTag = "",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await LoadPlayersAsync();
+    }
+
+    private async Task DeletePlayerAsync(int id)
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var player = await db.Players.FindAsync(id);
+        if (player is null){
+            return;
+        }
+
+        db.Players.Remove(player);
+        await db.SaveChangesAsync();
+        await LoadPlayersAsync();
+    }
+
+    private void OpenReactivationPopup(int playerId)
+    {
+        ReactivationPlayerId = playerId;
+        ReactivationRfid = "";
+        ShowReactivationPopup = true;
+    }
+
+    private void CloseReactivationPopup()
+    {
+        ShowReactivationPopup = false;
+        ReactivationPlayerId = null;
+        ReactivationRfid = "";
+    }
+
+    private async Task ConfirmReactivationAsync()
+    {
+        if (ReactivationPlayerId is null)
+        {
+            return;
+        }
+
+        var normalizedRfid = string.IsNullOrWhiteSpace(ReactivationRfid)
+            ? null
+            : ReactivationRfid.Trim();
+
+        if (string.IsNullOrEmpty(normalizedRfid))
+        {
+            return;
+        }
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        var player = await db.Players.FirstOrDefaultAsync(p => p.Id == ReactivationPlayerId.Value);
+        if (player is null)
+        {
+            return;
+        }
+
+        var existingOwners = await db.Players
+            .Where(p => p.RfidTag == normalizedRfid && p.Id != player.Id)
+            .ToListAsync();
+
+        foreach (var owner in existingOwners)
+        {
+            owner.IsActive = false;
+            owner.DeactivatedAt = DateTime.UtcNow;
+            owner.RfidTag = null;
+        }
+
+        if (existingOwners.Count > 0)
+        {
+            await db.SaveChangesAsync();
+        }
+
+        player.IsActive = true;
+        player.DeactivatedAt = null;
+        player.RfidTag = normalizedRfid;
+
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        CloseReactivationPopup();
+        await LoadPlayersAsync();
+    }
+}

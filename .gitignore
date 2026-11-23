@@ -1,0 +1,7 @@
+# .NET build output (Hotwire.Web)
+bin/
+obj/
+.vs/
+
+# Python
+__pycache__/
