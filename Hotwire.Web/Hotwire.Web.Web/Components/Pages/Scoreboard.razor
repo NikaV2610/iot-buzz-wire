@@ -9,7 +9,8 @@
 
 <div class="page-header">
 	<h1 class="page-title">Scoreboard</h1>
-	<p class="page-subtitle">@Entries.Count completed runs, sorted by time. Updates automatically after every run.</p>
+	<p class="page-subtitle">@Entries.Count completed runs, sorted by points. Updates automatically after every run.</p>
+	<div class="score-rule">Points = @ScoreCalculator.Rule</div>
 </div>
 
 @if (Entries.Count == 0)
@@ -24,8 +25,8 @@ else
 			<div class="podium-card podium-@e.Rank">
 				<span class="podium-medal">@(e.Rank == 1 ? "🥇" : e.Rank == 2 ? "🥈" : "🥉")</span>
 				<span class="podium-name">@e.PlayerName</span>
-				<span class="podium-time">@e.Duration.ToString("0.00") s</span>
-				<span class="podium-errors">@(e.Collisions ?? 0) @((e.Collisions ?? 0) == 1 ? "error" : "errors")</span>
+				<span class="podium-time">@e.Points <small>pts</small></span>
+				<span class="podium-errors">@e.Duration.ToString("0.00") s · @(e.Collisions ?? 0) @((e.Collisions ?? 0) == 1 ? "error" : "errors")</span>
 			</div>
 		}
 	</div>
@@ -37,6 +38,7 @@ else
 					<tr>
 						<th>#</th>
 						<th>Player</th>
+						<th class="text-end">Points</th>
 						<th class="text-end">Time</th>
 						<th class="text-end">Errors</th>
 					</tr>
@@ -47,6 +49,7 @@ else
 						<tr class="@(e.Rank <= 3 ? "is-top" : "")">
 							<td><span class="rank">@e.Rank</span></td>
 							<td>@e.PlayerName</td>
+							<td class="text-end mono"><b>@e.Points</b></td>
 							<td class="text-end mono">@e.Duration.ToString("0.00") s</td>
 							<td class="text-end">
 								<span class="error-chip @(e.Collisions > 0 ? "has-errors" : "")">@(e.Collisions?.ToString() ?? "-")</span>
@@ -68,6 +71,7 @@ else
 		public string PlayerName { get; set; } = "";
 		public double Duration { get; set; }
 		public int? Collisions { get; set; }
+		public int Points { get; set; }
 	}
 
 	protected override async Task OnInitializedAsync()
@@ -114,17 +118,24 @@ else
 					run.Duration,
 					run.Collisions
 				})
-			.OrderBy(x => x.Duration)
 			.ToListAsync();
 
+		// Most points first; same points -> faster run first
 		Entries = raw
-			.Select((x, index) => new HighscoreEntry
+			.Select(x => new HighscoreEntry
 				{
-					Rank = index + 1,
 					PlayerName = $"{x.FirstName} {x.LastName}".Trim(),
 					Duration = x.Duration,
-					Collisions = x.Collisions
+					Collisions = x.Collisions,
+					Points = ScoreCalculator.Points(x.Duration, x.Collisions ?? 0)
 				})
+			.OrderByDescending(e => e.Points)
+			.ThenBy(e => e.Duration)
 			.ToList();
+
+		for (var i = 0; i < Entries.Count; i++)
+		{
+			Entries[i].Rank = i + 1;
+		}
 	}
 }

@@ -73,7 +73,7 @@ If the card is not read: check 3.3 V/GND and SPI wires; if needed connect RC522 
 - [ ] Red button + card → **Players** page shows "Card … is not assigned yet", RFID field is filled in → enter a name and save
 - [ ] Home page live view shows the player name
 - [ ] Start → touch wire 3× → stop; live view counts errors and time
-- [ ] Scoreboard shows the run with **3 errors** and a plausible time
+- [ ] Scoreboard shows the run with **3 errors**, a plausible time and points = 1000 − 10 × s − 10 × errors
 
 ## 6. Camera
 

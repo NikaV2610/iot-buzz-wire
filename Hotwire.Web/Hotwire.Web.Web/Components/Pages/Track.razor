@@ -296,9 +296,12 @@ else
 		var runs = db.GameRuns.Where(r => r.Completed &&
 						r.CalibrationId == CalibrationState.ActiveCalibrationId.Value);
 
-		// best = fastest run, otherwise the newest run
+		// best = most points (same rule as the scoreboard), otherwise the newest run
 		var bestRun = best
-			? await runs.OrderBy(r => r.Duration).FirstOrDefaultAsync()
+			? (await runs.ToListAsync())
+				.OrderByDescending(r => ScoreCalculator.Points(r.Duration, r.Collisions ?? 0))
+				.ThenBy(r => r.Duration)
+				.FirstOrDefault()
 			: await runs.OrderByDescending(r => r.Id).FirstOrDefaultAsync();
 
 		if (bestRun is null)
@@ -338,7 +341,7 @@ else
 		var label = best ? "Best run" : "Last run";
 		ReplayMessage = BestRunPositions.Count == 0
 			? $"{label} #{bestRun.Id} found, but without position data (was the camera running?)."
-			: $"{label} #{bestRun.Id}: {bestRun.Duration:0.00} s, {bestRun.Collisions ?? 0} errors" +
+			: $"{label} #{bestRun.Id}: {ScoreCalculator.Points(bestRun.Duration, bestRun.Collisions ?? 0)} points ({bestRun.Duration:0.00} s, {bestRun.Collisions ?? 0} errors)" +
 			  (touches.Count > 0 ? " – red X = where the wire was touched." : ".");
 	}
 

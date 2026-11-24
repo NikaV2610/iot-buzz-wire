@@ -498,3 +498,18 @@ html, body {
 .row-scanned td { background: #e6f6ec !important; font-weight: 700; }
 
 .live-link { font-size: .8rem; font-weight: 600; text-decoration: none; margin-top: .2rem; }
+
+/* ---------- Score ---------- */
+.score-rule {
+    display: inline-block;
+    padding: .45rem .9rem;
+    border-radius: 999px;
+    background: #fff8e1;
+    border: 1px solid #f6e3a6;
+    color: #7a5a00;
+    font-weight: 600;
+    font-size: .9rem;
+}
+
+.podium-time small { font-size: 1rem; font-weight: 700; color: var(--bw-muted); }
+.live-score .live-big { color: #b7791f; }

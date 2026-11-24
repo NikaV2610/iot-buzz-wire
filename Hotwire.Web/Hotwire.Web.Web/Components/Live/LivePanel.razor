@@ -51,6 +51,12 @@
             <span class="live-tile-sub">seconds</span>
         </div>
 
+        <div class="live-tile live-score">
+            <span class="live-tile-label">Points</span>
+            <span class="live-big">@ShownPoints</span>
+            <span class="live-tile-sub">@ScoreCalculator.Rule</span>
+        </div>
+
         <div class="live-tile">
             <span class="live-tile-label">Camera</span>
             @if (MarkerVisible)
@@ -76,6 +82,18 @@
         (DateTime.UtcNow - Live.LastPosition.TimestampUtc).TotalSeconds < 1;
 
     private int ShownErrors => Live.IsRunActive ? Live.CollisionCount : Live.LastCollisions ?? 0;
+
+    // Live score: drops while the clock runs and with every error
+    private string ShownPoints
+    {
+        get
+        {
+            double? seconds = Live.IsRunActive && Live.RunStartUtc is not null
+                ? (DateTime.UtcNow - Live.RunStartUtc.Value).TotalSeconds
+                : Live.LastDuration;
+            return seconds is null ? "–" : ScoreCalculator.Points(seconds.Value, ShownErrors).ToString();
+        }
+    }
 
     private string ShownTime
     {

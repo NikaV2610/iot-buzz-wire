@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 
 <PageTitle>Smart Buzz Wire</PageTitle>
 
@@ -6,7 +6,7 @@
 	<p class="home-kicker">Internet of Things · Smart Buzz Wire</p>
 	<h1>Steady hands win.</h1>
 	<p class="lead mb-0">
-		Scan your card, follow the wire without touching it and beat the highscore.
+		Scan your card, follow the wire fast and without touching it, and collect the most points.
 	</p>
 </div>
 
@@ -20,6 +20,7 @@
 	<div class="step"><span class="step-no">4</span><b>Follow the wire</b><span>every touch = error</span></div>
 	<div class="step"><span class="step-no">5</span><b>Touch stop</b><span>time is saved</span></div>
 </div>
+<div class="score-rule mb-4">🏆 Points = @ScoreCalculator.Rule – one error costs as much as 1 second.</div>
 
 <h2 class="section-title">Pages</h2>
 <div class="row g-3">
@@ -27,7 +28,7 @@
 		<a class="home-card text-decoration-none" href="scoreboard">
 			<span class="home-card-icon">🏆</span>
 			<h5>Scoreboard</h5>
-			<p>Fastest runs with time and errors.</p>
+			<p>Best runs by points (time and errors).</p>
 		</a>
 	</div>
 

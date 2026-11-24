@@ -9,6 +9,7 @@ A classic buzz wire game, extended with IoT:
 - A new player presses the **red button** and scans an **RFID card**.
 - Every touch of the wire is counted as an **error**, the buzzer makes a sound.
 - A **webcam** tracks the **red tip** of the handle (live position).
+- Every run gets **points**: fast and clean wins.
 - A **web app** shows the game live, stores every run, shows the scoreboard and replays runs on the calibrated track, including the points where the wire was touched.
 
 ## 2. Architecture
@@ -35,7 +36,7 @@ All parts only talk via MQTT. Nobody calls anybody else directly.
 3. **Touch start contact** – errors = 0, event 0, the web app creates a new run. Touching start again during a run restarts it.
 4. **Touch the wire** – errors + 1, event 2. The web app counts it and stores **where** it happened (last camera position).
 5. **Touch stop contact** – event 1, the web app saves end time and duration. The same player can start again right away.
-6. The run appears on the **scoreboard**; on the **Track** page it can be replayed.
+6. The run gets its **points** and appears on the **scoreboard**; on the **Track** page it can be replayed.
 
 The ESP firmware is a small state machine:
 
@@ -48,7 +49,19 @@ The serial console (`idf.py monitor`) shows the game, e.g. `START - errors: 0`, 
 
 Every action has its own sound: card = two short beeps, start = rising melody, wire = low buzz, stop = fanfare, buttons = click.
 
-## 4. Calibration (record the track)
+## 4. Scoring
+
+```
+points = 1000 - 10 x seconds - 10 x errors      (never below 0)
+```
+
+- One error costs as much as 1 second. In the test players made 20–30 errors per run, so a higher penalty (first idea: 50 per error) pushed almost every run to 0 points.
+- Examples: 20 s + 25 errors = **550**, 30 s + 10 errors = **600**, 15 s + 40 errors = **450**.
+- More points = better. Same points: the faster run wins.
+- The points are **calculated, not stored** (`Services/ScoreCalculator.cs`). Changing the numbers there changes the ranking of all runs at once, no database change needed.
+- The live view shows the points dropping while the clock runs.
+
+## 5. Calibration (record the track)
 
 1. Press the **blue button** – the ESP waits for the start contact (no player needed).
 2. Touch **start** – the ESP sends event 5, the web app starts recording camera positions.
@@ -58,7 +71,7 @@ Every action has its own sound: card = two short beeps, start = rising melody, w
 
 Pressing the blue button again before start cancels the calibration.
 
-## 5. Hardware and wiring
+## 6. Hardware and wiring
 
 The metal loop on the handle is connected to **GND**. Start, stop and wire use the internal pull-up, so a contact pulls its pin LOW.
 The two button modules (blue, red) are powered with **3.3 V** and switch the pin HIGH, they use the internal pull-down.
@@ -76,7 +89,7 @@ The two button modules (blue, red) are powered with **3.3 V** and switch the pin
 
 GPIO 8 and 9 are boot pins and stay free. GPIO 2 is also a boot pin; the ESP boots fine with the red button module on it. Logs go over the USB port (`CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG`), so GPIO 20/21 (RX/TX) can be used.
 
-## 6. MQTT interface
+## 7. MQTT interface
 
 Broker: `broker.emqx.io:1883` (public, no login – for testing only). Three topics, as planned on the whiteboard (GameData, Position, RFID):
 
@@ -105,7 +118,7 @@ Broker: `broker.emqx.io:1883` (public, no login – for testing only). Three top
 
 About 10 messages per second, only when the red tip is visible. Stored only while a run is active (or recorded during a calibration).
 
-## 7. Camera tracking
+## 8. Camera tracking
 
 - OpenCV converts each frame to HSV and keeps only **strong red** (hue 0–7 and 170–180, saturation ≥ 140). Measured: red tip hue 1–5, skin hue 11–23, so skin is ignored.
 - The largest red blob gives x/y.
@@ -114,18 +127,18 @@ About 10 messages per second, only when the red tip is visible. Stored only whil
 
 The web app cleans every path again before showing or saving it (`Services/TrackSmoothing.cs`): jump filter (120 px), median over 7 points (removes outliers), moving average over 5 points (smooths jitter). The display is mirrored left/right, because the camera looks at the course from the front.
 
-## 8. Web app
+## 9. Web app
 
 | Page | Content |
 |---|---|
-| **Home** | Live view: player, status, errors, running time, camera status (updates by itself) |
-| **Scoreboard** | Podium + list of all completed runs, updates after every run |
-| **Track** | Calibrated track (blue), live dot (green) while playing, replay of the last or best run (red) with a red X where the wire was touched |
+| **Home** | Live view: player, status, errors, running time, live points, camera status (updates by itself) |
+| **Scoreboard** | Ranking by points (podium + list), updates after every run |
+| **Track** | Calibrated track (blue), live dot (green) while playing, replay of the last or best run by points (red) with a red X where the wire was touched |
 | **Players** | Shows the last scanned card; an unknown card is filled into the form, so a new player only needs a name |
 
 The top bar shows the live status on every page. New database tables are created automatically on start (EF Core migrations, e.g. `CollisionPoints`).
 
-## 9. How to run
+## 10. How to run
 
 **Firmware**
 
@@ -154,14 +167,15 @@ Then open http://localhost:5175.
 
 **Without hardware:** `python tools/fake_esp.py <card> <errors>` sends a complete run (red button, card, start, errors, stop).
 
-## 10. Changes compared to the handout
+## 11. Changes compared to the handout
 
 - **LED strip for the best run removed.** The best run is shown as a replay in the web app instead.
 - **ESP32 → ESP32-C3 SuperMini.** Pins and SPI host were adapted.
 - The camera tracks the **red tip** of the handle instead of a bright ball.
 - **Red button** for a new player, **blue button** for the calibration.
+- **Points** instead of time only (time and errors both count).
 
-## 11. Known limitations
+## 12. Known limitations
 
 - **Run time is measured on the server** (arrival time of Start and Stop). With a normal WiFi this is accurate enough; after a connection drop it can be wrong.
 - The **public broker** can be read and written by anyone. For real use: own broker (e.g. Mosquitto) with login and TLS.
