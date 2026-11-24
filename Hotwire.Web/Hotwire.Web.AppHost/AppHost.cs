@@ -1,12 +1,7 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var apiService = builder.AddProject<Projects.Hotwire_Web_ApiService>("apiservice")
-    .WithHttpHealthCheck("/health");
-
 builder.AddProject<Projects.Hotwire_Web_Web>("webfrontend")
     .WithExternalHttpEndpoints()
-    .WithHttpHealthCheck("/health")
-    .WithReference(apiService)
-    .WaitFor(apiService);
+    .WithHttpHealthCheck("/health");
 
 builder.Build().Run();
