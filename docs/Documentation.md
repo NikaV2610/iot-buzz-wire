@@ -43,15 +43,15 @@ The metal loop on the handle is connected to **GND**. All inputs use the interna
 
 | Component | ESP32-C3 pin |
 |---|---|
-| Course wire | GPIO 0 |
-| Start contact | GPIO 1 |
-| Stop contact | GPIO 3 |
-| Calibration button | GPIO 20 |
-| Buzzer (PWM) | GPIO 21 |
+| Course wire | GPIO 10 |
+| Start contact | GPIO 21 |
+| Stop contact | GPIO 20 |
+| Calibration button | GPIO 1 |
+| Buzzer (PWM) | GPIO 0 |
 | RC522 SCK / MISO / MOSI | GPIO 4 / 5 / 6 |
-| RC522 SS / RST | GPIO 7 / 10 |
+| RC522 SS / RST | GPIO 7 / 2 |
 
-GPIO 2, 8 and 9 are boot pins and stay free. Logs go over the USB port (`CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG`), so GPIO 20/21 can be used.
+GPIO 8 and 9 are boot pins and stay free. GPIO 2 is also a boot pin, but the RC522 RST input does not pull it LOW, so it is safe. Logs go over the USB port (`CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG`), so GPIO 20/21 (RX/TX) can be used.
 
 ## 5. MQTT interface
 

@@ -47,12 +47,14 @@ All contacts switch to **GND** (handle loop = GND). RC522 on **3.3 V**, not 5 V.
 
 | Part | Pin | Test | Expected in monitor |
 |---|---|---|---|
-| RC522 SCK/MISO/MOSI/SS/RST | 4 / 5 / 6 / 7 / 10 | hold a card | `Player card: <UID>`, short beep |
-| Start contact | 1 | touch with loop | `Run started` |
-| Course wire | 0 | touch with loop | `Collision`, low beep |
-| Stop contact | 3 | touch with loop | `Run finished`, long beep |
-| Calibration button | 20 | press | `Calibration button` |
-| Buzzer | 21 | (all of the above) | beeps |
+| RC522 SCK/MISO/MOSI/SS/RST | 4 / 5 / 6 / 7 / 2 | hold a card | `Player card: <UID>`, short beep |
+| Start contact | 21 | touch with loop | `Run started` |
+| Course wire | 10 | touch with loop | `Collision`, low beep |
+| Stop contact | 20 | touch with loop | `Run finished`, long beep |
+| Calibration button | 1 | press | `Calibration button` |
+| Buzzer | 0 | (all of the above) | beeps |
+
+If the ESP does not start (no log after reset) with the RC522 connected: unplug the RST wire (GPIO 2 is a boot pin) and try again.
 
 Order matters: start only works after a card, wire and stop only during a run.
 
