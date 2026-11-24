@@ -1,57 +1,56 @@
 @page "/scoreboard"
 
 @inject IDbContextFactory<GameDbContext> DbFactory
+@inject LiveGameState Live
+@implements IDisposable
 
 @using Hotwire.Web.Web.Data
 @using Microsoft.EntityFrameworkCore
 
 <div class="page-header">
-	<h1 class="page-title">Highscores (@Entries.Count)</h1>
-	<p class="page-subtitle">Best completed runs sorted by duration.</p>
+	<h1 class="page-title">Scoreboard</h1>
+	<p class="page-subtitle">@Entries.Count completed runs, sorted by time. Updates automatically after every run.</p>
 </div>
 
 @if (Entries.Count == 0)
 {
-	<div class="empty-state">No completed runs found.</div>
+	<div class="empty-state">No completed runs yet – play the first one!</div>
 }
 else
 {
+	<div class="podium mb-4">
+		@foreach (var e in Entries.Take(3))
+		{
+			<div class="podium-card podium-@e.Rank">
+				<span class="podium-medal">@(e.Rank == 1 ? "🥇" : e.Rank == 2 ? "🥈" : "🥉")</span>
+				<span class="podium-name">@e.PlayerName</span>
+				<span class="podium-time">@e.Duration.ToString("0.00") s</span>
+				<span class="podium-errors">@(e.Collisions ?? 0) @((e.Collisions ?? 0) == 1 ? "error" : "errors")</span>
+			</div>
+		}
+	</div>
+
 	<div class="surface-card">
 		<div class="table-wrap">
-			<table class="table table-striped mb-0">
+			<table class="table mb-0 score-table">
 				<thead>
 					<tr>
 						<th>#</th>
 						<th>Player</th>
-						<th>Time (s)</th>
-						<th>Collisions</th>
+						<th class="text-end">Time</th>
+						<th class="text-end">Errors</th>
 					</tr>
 				</thead>
 				<tbody>
 					@foreach (var e in Entries)
 					{
-						<tr>
-							<td>
-								@if (e.Rank == 1)
-								{
-									<span class="badge text-bg-warning">🥇 1</span>
-								}
-								else if (e.Rank == 2)
-								{
-									<span class="badge text-bg-secondary">🥈 2</span>
-								}
-								else if (e.Rank == 3)
-								{
-									<span class="badge text-bg-dark">🥉 3</span>
-								}
-								else
-								{
-									@e.Rank
-								}
-							</td>
+						<tr class="@(e.Rank <= 3 ? "is-top" : "")">
+							<td><span class="rank">@e.Rank</span></td>
 							<td>@e.PlayerName</td>
-							<td>@e.Duration.ToString("0.000")</td>
-							<td>@(e.Collisions?.ToString() ?? "-")</td>
+							<td class="text-end mono">@e.Duration.ToString("0.00") s</td>
+							<td class="text-end">
+								<span class="error-chip @(e.Collisions > 0 ? "has-errors" : "")">@(e.Collisions?.ToString() ?? "-")</span>
+							</td>
 						</tr>
 					}
 				</tbody>
@@ -74,7 +73,29 @@ else
 	protected override async Task OnInitializedAsync()
 	{
 		await LoadHighscoresAsync();
+		_handledStop = Live.LastEvent;
+		Live.Changed += OnLiveChanged;
 	}
+
+	private object? _handledStop;   // reload only once per stop message
+
+	// Reload when a run was just finished (stop contact)
+	private void OnLiveChanged()
+	{
+		var ev = Live.LastEvent;
+		if (ev?.EventType == Hotwire.Web.Web.Iot.Contracts.GameEventType.Stop && ev != _handledStop)
+		{
+			_handledStop = ev;
+			_ = InvokeAsync(async () =>
+			{
+				await Task.Delay(500);   // give the database a moment
+				await LoadHighscoresAsync();
+				StateHasChanged();
+			});
+		}
+	}
+
+	public void Dispose() => Live.Changed -= OnLiveChanged;
 
 	private async Task LoadHighscoresAsync()
 	{

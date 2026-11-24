@@ -1,4 +1,5 @@
 import json
+import sys
 import time
 
 import cv2
@@ -11,6 +12,16 @@ MQTT_PORT = 1883
 MQTT_TOPIC = "hotwire/iot-buzz-wire/test/position"
 
 SEND_INTERVAL = 0.1  # 10 Nachrichten pro Sekunde
+
+# Camera number: 0 = first camera, 2 = external Logi C270 on Andi's laptop.
+# Other camera: python camera_tracker.py 1
+CAMERA_INDEX = int(sys.argv[1]) if len(sys.argv) > 1 else 2
+
+# Jump filter: a detection far away from the last good position is ignored
+# (e.g. skin or something red in the background for one moment).
+# It is only accepted when it stays there for several frames.
+MAX_JUMP = 60          # pixels per frame
+JUMP_CONFIRM = 5       # frames the new position must be stable
 
 
 def on_connect(client, userdata, flags, reason_code, properties):
@@ -31,8 +42,10 @@ client.on_connect = on_connect
 client.on_connect_fail = on_connect_fail
 client.reconnect_delay_set(min_delay=1, max_delay=30)
 
-camera = cv2.VideoCapture(0)
+camera = cv2.VideoCapture(CAMERA_INDEX, cv2.CAP_DSHOW)  # DSHOW works better on Windows
 last_send = 0.0
+last_good = None       # last accepted marker position
+jump_count = 0         # frames in a row that were too far away
 
 try:
     if not camera.isOpened():
@@ -51,11 +64,20 @@ try:
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-        mask = cv2.inRange(
+        # Red marker: red is at both ends of the hue range (0-7 and 170-180),
+        # so two masks are combined. Measured: red tip hue 1-5,
+        # skin hue 11-23 -> hue up to 7 and saturation >= 140 ignore skin.
+        mask_low = cv2.inRange(
             hsv,
-            np.array([100, 120, 30]),
-            np.array([130, 255, 255])
+            np.array([0, 140, 50]),
+            np.array([7, 255, 255])
         )
+        mask_high = cv2.inRange(
+            hsv,
+            np.array([170, 140, 50]),
+            np.array([180, 255, 255])
+        )
+        mask = mask_low | mask_high
 
         kernel = np.ones((3, 3), dtype=np.uint8)
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
@@ -91,6 +113,20 @@ try:
                         (0, 255, 0),
                         2,
                     )
+
+        # Jump filter (see MAX_JUMP above)
+        if x is not None and last_good is not None:
+            jump = ((x - last_good[0]) ** 2 + (y - last_good[1]) ** 2) ** 0.5
+            if jump > MAX_JUMP:
+                jump_count += 1
+                if jump_count < JUMP_CONFIRM:
+                    x = None   # ignore this frame
+                    y = None
+            else:
+                jump_count = 0
+        if x is not None:
+            last_good = (x, y)
+            jump_count = 0
 
         now = time.monotonic()
 

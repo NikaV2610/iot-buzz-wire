@@ -11,25 +11,27 @@
 
 #define MQTT_URI        "mqtt://broker.emqx.io:1883"
 #define MQTT_GAME_TOPIC "hotwire/iot-buzz-wire/test/game"
+#define MQTT_RFID_TOPIC "hotwire/iot-buzz-wire/test/rfid"
 #define DEVICE_ID       "buzzwire-esp32c3"
 
 /* ============================================================
    Pins ESP32-C3 SuperMini (see docs/Verkabelung.drawio)
    Do not use GPIO 8, 9 (boot pins).
-   All inputs use the internal pull-up: contact closed = LOW.
-   The metal loop on the handle is connected to GND.
+   Start, stop and wire: handle loop on GND, pull-up -> contact = LOW.
+   Button modules (blue, red) on 3.3 V (never 5 V!), pull-down -> pressed = HIGH.
    ============================================================ */
 #define PIN_WIRE            10    /* course wire */
 #define PIN_START_CONTACT   21
 #define PIN_STOP_CONTACT    20
-#define PIN_CAL_BUTTON      1     /* calibration start button */
+#define PIN_CAL_BUTTON      1     /* blue button: calibration */
+#define PIN_PLAYER_BUTTON   2     /* red button: new player (scan card) */
 #define PIN_BUZZER          0     /* PWM */
 
 #define PIN_RFID_SCK        4
 #define PIN_RFID_MISO       5
 #define PIN_RFID_MOSI       6
 #define PIN_RFID_SS         7
-#define PIN_RFID_RST        2
+#define PIN_RFID_RST        -1    /* not connected, soft reset */
 
 #define RFID_UID_LEN        24    /* max. UID string length incl. terminator */
 

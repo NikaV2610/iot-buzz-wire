@@ -17,6 +17,31 @@ namespace Hotwire.Web.Web.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
 
+            modelBuilder.Entity("Hotwire.Web.Web.Models.CollisionPoint", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("GameRunId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("X")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("Y")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameRunId");
+
+                    b.ToTable("CollisionPoints");
+                });
+
             modelBuilder.Entity("Hotwire.Web.Web.Models.GameRun", b =>
                 {
                     b.Property<int>("Id")
@@ -126,6 +151,15 @@ namespace Hotwire.Web.Web.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TrackCalibration");
+                });
+
+            modelBuilder.Entity("Hotwire.Web.Web.Models.CollisionPoint", b =>
+                {
+                    b.HasOne("Hotwire.Web.Web.Models.GameRun", null)
+                        .WithMany()
+                        .HasForeignKey("GameRunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Hotwire.Web.Web.Models.GameRun", b =>

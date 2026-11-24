@@ -1,0 +1,117 @@
+@* Live view of the game: player, status, errors, time and camera.
+   Redraws on every MQTT message (LiveGameState.Changed). *@
+@implements IDisposable
+@inject LiveGameState Live
+@inject CalibrationStateService Calibration
+
+<section class="live-panel @StatusClass">
+    <div class="live-head">
+        <div>
+            <span class="live-dot"></span>
+            <span class="live-label">LIVE</span>
+        </div>
+        <span class="live-status">@StatusText</span>
+    </div>
+
+    <div class="live-grid">
+        <div class="live-tile live-player">
+            <span class="live-tile-label">Player</span>
+            @if (Live.WaitingForCard)
+            {
+                <span class="live-tile-value muted">Scan a card…</span>
+            }
+            else if (Live.CurrentRfid is null)
+            {
+                <span class="live-tile-value muted">Press the red button</span>
+            }
+            else if (Live.CurrentPlayerName is null)
+            {
+                <span class="live-tile-value warn">Unknown card</span>
+                <a class="live-link" href="players">Assign on Players page →</a>
+            }
+            else
+            {
+                <span class="live-tile-value">@Live.CurrentPlayerName</span>
+            }
+            @if (Live.CurrentRfid is not null)
+            {
+                <span class="live-tile-sub">Card @Live.CurrentRfid</span>
+            }
+        </div>
+
+        <div class="live-tile live-errors">
+            <span class="live-tile-label">Errors</span>
+            <span class="live-big @(ShownErrors > 0 ? "has-errors" : "")">@ShownErrors</span>
+            <span class="live-tile-sub">@(Live.IsRunActive ? "this run" : "last run")</span>
+        </div>
+
+        <div class="live-tile">
+            <span class="live-tile-label">Time</span>
+            <span class="live-big">@ShownTime</span>
+            <span class="live-tile-sub">seconds</span>
+        </div>
+
+        <div class="live-tile">
+            <span class="live-tile-label">Camera</span>
+            @if (MarkerVisible)
+            {
+                <span class="live-tile-value ok">Marker visible</span>
+                <span class="live-tile-sub">x @Live.LastPosition!.X · y @Live.LastPosition!.Y</span>
+            }
+            else
+            {
+                <span class="live-tile-value muted">No marker</span>
+                <span class="live-tile-sub">red tip not in view</span>
+            }
+        </div>
+    </div>
+</section>
+
+@code {
+    private Timer? _timer;
+
+    // Camera sends 10x per second; older than 1 s = marker lost
+    private bool MarkerVisible =>
+        Live.LastPosition is not null &&
+        (DateTime.UtcNow - Live.LastPosition.TimestampUtc).TotalSeconds < 1;
+
+    private int ShownErrors => Live.IsRunActive ? Live.CollisionCount : Live.LastCollisions ?? 0;
+
+    private string ShownTime
+    {
+        get
+        {
+            double? seconds = Live.IsRunActive && Live.RunStartUtc is not null
+                ? (DateTime.UtcNow - Live.RunStartUtc.Value).TotalSeconds
+                : Live.LastDuration;
+            return seconds is null ? "–" : seconds.Value.ToString("0.0");
+        }
+    }
+
+    private string StatusText =>
+        Calibration.IsRecording ? "Calibration running – follow the wire" :
+        Live.IsRunActive ? "Run in progress" :
+        Live.WaitingForCard ? "Waiting for card" :
+        Live.CurrentRfid is not null ? (Live.LastDuration is null ? "Ready – touch start" : "Finished – touch start to play again") :
+        "Waiting for player";
+
+    private string StatusClass =>
+        Calibration.IsRecording ? "is-calibrating" :
+        Live.IsRunActive ? "is-running" :
+        Live.CurrentRfid is not null ? "is-ready" : "is-idle";
+
+    protected override void OnInitialized()
+    {
+        Live.Changed += OnChanged;
+        // Redraw 5x per second: running clock and "marker lost" detection
+        _timer = new Timer(_ => InvokeAsync(StateHasChanged), null, 200, 200);
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Live.Changed -= OnChanged;
+        _timer?.Dispose();
+    }
+}

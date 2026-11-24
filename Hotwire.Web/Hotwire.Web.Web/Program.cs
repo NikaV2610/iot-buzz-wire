@@ -30,6 +30,12 @@ builder.Services.AddScoped<GameIngestionCoordinator>();
 
 var app = builder.Build();
 
+// Create missing tables on start (applies new migrations to hotwire.db)
+using (var db = app.Services.GetRequiredService<IDbContextFactory<GameDbContext>>().CreateDbContext())
+{
+    db.Database.Migrate();
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);

@@ -10,6 +10,7 @@ public class GameDbContext : DbContext
     public DbSet<GameRun> GameRuns => Set<GameRun>();
     public DbSet<PositionData> PositionDatas => Set<PositionData>();
     public DbSet<TrackCalibration> TrackCalibration => Set<TrackCalibration>();
+    public DbSet<CollisionPoint> CollisionPoints => Set<CollisionPoint>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,6 +32,13 @@ public class GameDbContext : DbContext
             .HasOne<TrackCalibration>()
             .WithMany()
             .HasForeignKey(r => r.CalibrationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Wire touches belong to a run and are deleted with it
+        modelBuilder.Entity<CollisionPoint>()
+            .HasOne<GameRun>()
+            .WithMany()
+            .HasForeignKey(c => c.GameRunId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -209,3 +209,292 @@ h1:focus {
     padding: .6rem;
     background: #f8fafc;
 }
+
+/* ===================== Smart Buzz Wire redesign ===================== */
+:root {
+    --bw-navy: #0d2547;
+    --bw-blue: #1b6ec2;
+    --bw-red: #e5484d;
+    --bw-green: #18a058;
+    --bw-amber: #f0a020;
+    --bw-violet: #7c5cff;
+    --bw-muted: #64748b;
+    --bw-border: #e3e9f2;
+}
+
+html, body {
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    background: #f3f6fb;
+}
+
+.page-title { font-size: 1.9rem; font-weight: 800; color: var(--bw-navy); letter-spacing: -.01em; }
+
+.section-title {
+    font-size: .8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--bw-muted);
+    margin: 1.75rem 0 .75rem;
+}
+
+/* ---------- Hero ---------- */
+.home-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 2rem 2.25rem;
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at 85% 20%, rgba(229, 72, 77, .35), transparent 45%),
+        linear-gradient(135deg, #1b6ec2 0%, #0d2547 100%);
+}
+
+.home-hero h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: .4rem; }
+
+/* wire-like curve as decoration */
+.home-hero::after {
+    content: "";
+    position: absolute;
+    right: -40px;
+    bottom: -60px;
+    width: 320px;
+    height: 200px;
+    border: 4px solid rgba(255, 255, 255, .18);
+    border-radius: 50% 40% 60% 30%;
+    transform: rotate(-12deg);
+}
+
+/* ---------- Live panel ---------- */
+.live-panel {
+    --accent: var(--bw-muted);
+    background: #fff;
+    border: 1px solid var(--bw-border);
+    border-top: 5px solid var(--accent);
+    border-radius: 18px;
+    padding: 1.1rem 1.25rem 1.25rem;
+    box-shadow: 0 10px 30px rgba(13, 37, 71, .08);
+    transition: border-color .3s ease;
+}
+
+.live-panel.is-ready { --accent: var(--bw-blue); }
+.live-panel.is-running { --accent: var(--bw-green); }
+.live-panel.is-calibrating { --accent: var(--bw-violet); }
+
+.live-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.live-dot {
+    display: inline-block;
+    width: .65rem;
+    height: .65rem;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: .45rem;
+}
+
+.is-running .live-dot, .is-calibrating .live-dot { animation: pulse 1.2s infinite; }
+
+.live-label { font-weight: 800; letter-spacing: .15em; font-size: .8rem; color: var(--accent); }
+
+.live-status {
+    font-weight: 700;
+    color: #fff;
+    background: var(--accent);
+    padding: .3rem .8rem;
+    border-radius: 999px;
+    font-size: .85rem;
+}
+
+.live-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: .8rem;
+}
+
+.live-tile {
+    display: flex;
+    flex-direction: column;
+    background: #f7f9fc;
+    border: 1px solid #edf1f7;
+    border-radius: 14px;
+    padding: .85rem 1rem;
+    min-height: 118px;
+}
+
+.live-tile-label {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--bw-muted);
+}
+
+.live-tile-value { font-size: 1.35rem; font-weight: 700; color: var(--bw-navy); margin-top: .35rem; }
+.live-tile-value.muted { color: #94a3b8; }
+.live-tile-value.warn { color: var(--bw-amber); }
+.live-tile-value.ok { color: var(--bw-green); }
+.live-tile-sub { font-size: .8rem; color: var(--bw-muted); margin-top: auto; }
+
+.live-big {
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--bw-navy);
+    font-variant-numeric: tabular-nums;
+    margin-top: .2rem;
+}
+
+.live-big.has-errors { color: var(--bw-red); }
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(24, 160, 88, .55); }
+    70% { box-shadow: 0 0 0 10px rgba(24, 160, 88, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(24, 160, 88, 0); }
+}
+
+/* ---------- Live badge (top bar) ---------- */
+.live-badge {
+    --accent: var(--bw-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .35rem .85rem;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid var(--bw-border);
+    color: var(--bw-navy);
+    font-weight: 600;
+    font-size: .85rem;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.live-badge:hover { color: var(--bw-navy); border-color: var(--accent); }
+.live-badge.is-ready { --accent: var(--bw-blue); }
+.live-badge.is-running { --accent: var(--bw-green); }
+.live-badge.is-calibrating { --accent: var(--bw-violet); }
+.live-badge-dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--accent); }
+
+/* ---------- How to play ---------- */
+.steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: .6rem;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid var(--bw-border);
+    border-radius: 14px;
+    padding: .8rem 1rem;
+}
+
+.step b { color: var(--bw-navy); }
+.step span:last-child { font-size: .82rem; color: var(--bw-muted); }
+
+.step-no {
+    display: inline-grid;
+    place-items: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 50%;
+    background: var(--bw-blue);
+    color: #fff;
+    font-weight: 800;
+    font-size: .85rem;
+    margin-bottom: .45rem;
+}
+
+.step-no.step-red { background: var(--bw-red); }
+
+/* ---------- Home cards ---------- */
+.home-card { border-radius: 14px; padding: 1.1rem 1.2rem; border-color: var(--bw-border); }
+.home-card-icon { font-size: 1.6rem; display: block; margin-bottom: .35rem; }
+.home-card h5 { font-weight: 700; color: var(--bw-navy); }
+
+/* ---------- Scoreboard ---------- */
+.podium {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: .8rem;
+}
+
+.podium-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: #fff;
+    border: 1px solid var(--bw-border);
+    border-radius: 18px;
+    padding: 1.1rem;
+    box-shadow: 0 8px 24px rgba(13, 37, 71, .06);
+}
+
+.podium-1 { border-top: 5px solid #f2b705; }
+.podium-2 { border-top: 5px solid #a8b3c2; }
+.podium-3 { border-top: 5px solid #cd7f32; }
+.podium-medal { font-size: 2rem; }
+.podium-name { font-weight: 700; color: var(--bw-navy); font-size: 1.1rem; }
+.podium-time { font-size: 1.8rem; font-weight: 800; color: var(--bw-navy); font-variant-numeric: tabular-nums; }
+.podium-errors { font-size: .85rem; color: var(--bw-muted); }
+
+.score-table td { vertical-align: middle; }
+.score-table tr.is-top td { font-weight: 600; }
+.mono { font-variant-numeric: tabular-nums; }
+
+.rank {
+    display: inline-grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    background: #eef3fa;
+    font-weight: 700;
+    color: var(--bw-navy);
+}
+
+.error-chip {
+    display: inline-block;
+    min-width: 2rem;
+    text-align: center;
+    padding: .1rem .5rem;
+    border-radius: 999px;
+    background: #e8f6ee;
+    color: var(--bw-green);
+    font-weight: 700;
+}
+
+.error-chip.has-errors { background: #fdecec; color: var(--bw-red); }
+
+/* ---------- Track ---------- */
+.track-canvas { background: #fff; border-radius: 18px; border-color: var(--bw-border); }
+
+/* ---------- Players: scanned card banner ---------- */
+.scan-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid var(--bw-border);
+    border-left: 6px solid var(--bw-muted);
+}
+
+.scan-banner.is-known { border-left-color: var(--bw-green); background: #f1faf5; }
+.scan-banner.is-unknown { border-left-color: var(--bw-amber); background: #fff8ea; }
+.scan-icon { font-size: 1.8rem; }
+.scan-text { display: flex; flex-direction: column; }
+.scan-text b { color: var(--bw-navy); font-size: 1.05rem; }
+.scan-text span { color: var(--bw-muted); font-size: .9rem; }
+
+.row-scanned td { background: #e6f6ec !important; font-weight: 700; }
+
+.live-link { font-size: .8rem; font-weight: 600; text-decoration: none; margin-top: .2rem; }

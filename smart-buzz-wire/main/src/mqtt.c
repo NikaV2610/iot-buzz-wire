@@ -34,18 +34,30 @@ void mqtt_start(void)
     esp_mqtt_client_start(client);   /* reconnects automatically */
 }
 
-void mqtt_send_event(game_event_t event, const char *rfid_tag)
+void mqtt_send_event(game_event_t event)
 {
     if (!client) return;
 
-    /* Example: {"deviceId":"buzzwire-esp32c3","eventType":0,"rfidTag":"04A1B2C3"}
+    /* Example: {"deviceId":"buzzwire-esp32c3","eventType":0}
        The web app sets the timestamp itself. */
-    char json[128];
-    snprintf(json, sizeof(json),
-             "{\"deviceId\":\"%s\",\"eventType\":%d,\"rfidTag\":\"%s\"}",
-             DEVICE_ID, (int)event, rfid_tag);
+    char json[96];
+    snprintf(json, sizeof(json), "{\"deviceId\":\"%s\",\"eventType\":%d}",
+             DEVICE_ID, (int)event);
 
     /* enqueue = buffered, so the event is not lost on a short disconnect */
     esp_mqtt_client_enqueue(client, MQTT_GAME_TOPIC, json, 0, 1, 0, true);
+    ESP_LOGI(TAG, "Sent: %s", json);
+}
+
+void mqtt_send_rfid(const char *number)
+{
+    if (!client) return;
+
+    /* Example: {"deviceId":"buzzwire-esp32c3","number":"996C075A"} */
+    char json[96];
+    snprintf(json, sizeof(json), "{\"deviceId\":\"%s\",\"number\":\"%s\"}",
+             DEVICE_ID, number);
+
+    esp_mqtt_client_enqueue(client, MQTT_RFID_TOPIC, json, 0, 1, 0, true);
     ESP_LOGI(TAG, "Sent: %s", json);
 }

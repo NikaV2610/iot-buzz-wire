@@ -1,4 +1,4 @@
-﻿@page "/track"
+@page "/track"
 
 @using Hotwire.Web.Web.Data
 @using Hotwire.Web.Web.Services
@@ -10,6 +10,8 @@
 @inject IDbContextFactory<GameDbContext> DbFactory
 @inject IWebHostEnvironment Env
 @inject CalibrationStateService CalibrationState
+@inject LiveGameState Live
+@implements IDisposable
 
 <div class="page-header">
 	<h1 class="page-title">Track</h1>
@@ -40,11 +42,14 @@ else
 	</div>
 
 	<div class="page-actions">
-		<button class="btn btn-primary" @onclick="LoadBestReplayAsync">
-			Load best run for this calibration
+		<button class="btn btn-primary" @onclick="() => LoadAndPlayAsync(best: false)" disabled="@IsReplayRunning">
+			▶ Replay last run
+		</button>
+		<button class="btn btn-outline-primary" @onclick="() => LoadAndPlayAsync(best: true)" disabled="@IsReplayRunning">
+			🏆 Replay best run
 		</button>
 		<button class="btn btn-success" @onclick="StartReplayAsync" disabled="@(ScaledReplayPoints.Count < 2 || IsReplayRunning)">
-			Start Replay
+			Replay again
 		</button>
 		<button class="btn btn-outline-secondary" @onclick="StopReplay" disabled="@(!IsReplayRunning)">
 			Stop Replay
@@ -103,6 +108,14 @@ else
 							  stroke-dasharray="6 4" />
 				}
 
+				@* Real wire touches of the loaded run (red X) *@
+				@foreach (var c in CollisionMarkers)
+				{
+					<circle cx="@F(c.X)" cy="@F(c.Y)" r="11" fill="#e5484d" fill-opacity="0.18" stroke="#e5484d" stroke-width="2" />
+					<line x1="@F(c.X - 6)" y1="@F(c.Y - 6)" x2="@F(c.X + 6)" y2="@F(c.Y + 6)" stroke="#e5484d" stroke-width="3" stroke-linecap="round" />
+					<line x1="@F(c.X - 6)" y1="@F(c.Y + 6)" x2="@F(c.X + 6)" y2="@F(c.Y - 6)" stroke="#e5484d" stroke-width="3" stroke-linecap="round" />
+				}
+
 				@if (ReplayDotX is not null && ReplayDotY is not null)
 				{
 					@if (IsCollisionFrame)
@@ -133,6 +146,15 @@ else
 							fill="@ReplayDotFillColor"
 							stroke="white"
 							stroke-width="3" />
+				}
+
+				@* Live position of the red tip while a run (or calibration) is going on *@
+				@if (LiveDot is not null)
+				{
+					<circle cx="@F(LiveDot.Value.X)" cy="@F(LiveDot.Value.Y)" r="22"
+							fill="none" stroke="#18a058" stroke-width="3" stroke-opacity="0.4" />
+					<circle cx="@F(LiveDot.Value.X)" cy="@F(LiveDot.Value.Y)" r="12"
+							fill="#18a058" stroke="white" stroke-width="3" />
 				}
 			</svg>
 		</div>
@@ -177,6 +199,7 @@ else
 	protected override async Task OnInitializedAsync()
 	{
 		await LoadCalibrationAsync();
+		Live.Changed += OnLiveChanged;
 	}
 
 	private async Task LoadCalibrationAsync()
@@ -232,7 +255,35 @@ else
 		}
 	}
 
-	private async Task LoadBestReplayAsync()
+	// Green live dot: only while a run or calibration is active and the marker is visible
+	private (double X, double Y)? LiveDot =>
+		ScaledPoints.Count > 0 && (Live.IsRunActive || CalibrationState.IsRecording) &&
+		Live.LastPosition is not null &&
+		(DateTime.UtcNow - Live.LastPosition.TimestampUtc).TotalSeconds < 1
+			? ToSvg((Live.LastPosition.X, Live.LastPosition.Y))
+			: null;
+
+	private static string F(double v) => v.ToString("F1", CultureInfo.InvariantCulture);
+
+	private void OnLiveChanged() => InvokeAsync(StateHasChanged);
+
+	public void Dispose()
+	{
+		Live.Changed -= OnLiveChanged;
+		StopReplay();
+	}
+
+	// Load the last or the best run of the active track and play it right away
+	private async Task LoadAndPlayAsync(bool best)
+	{
+		await LoadReplayAsync(best);
+		if (ScaledReplayPoints.Count >= 2)
+		{
+			await StartReplayAsync();
+		}
+	}
+
+	private async Task LoadReplayAsync(bool best)
 	{
 		if (CalibrationState.ActiveCalibrationId is null)
 		{
@@ -242,11 +293,13 @@ else
 
 		await using var db = await DbFactory.CreateDbContextAsync();
 
-		var bestRun = await db.GameRuns
-			.Where(r => r.Completed &&
-						r.CalibrationId == CalibrationState.ActiveCalibrationId.Value)
-			.OrderBy(r => r.Duration)
-			.FirstOrDefaultAsync();
+		var runs = db.GameRuns.Where(r => r.Completed &&
+						r.CalibrationId == CalibrationState.ActiveCalibrationId.Value);
+
+		// best = fastest run, otherwise the newest run
+		var bestRun = best
+			? await runs.OrderBy(r => r.Duration).FirstOrDefaultAsync()
+			: await runs.OrderByDescending(r => r.Id).FirstOrDefaultAsync();
 
 		if (bestRun is null)
 		{
@@ -254,8 +307,11 @@ else
 			BestRunPositions = [];
 			ReplayCollisionCount = 0;
 			CollisionReplayIndices.Clear();
+			CollisionMarkers.Clear();
+			CleanReplay = [];
+			UpdateScale();
 			IsCollisionFrame = false;
-			ReplayMessage = "No highscore found for the active calibration.";
+			ReplayMessage = "No finished run on this track yet – play one first (runs from older tracks are not shown).";
 			return;
 		}
 
@@ -267,17 +323,23 @@ else
 			.ToListAsync();
 
 		ReplayCollisionCount = Math.Max(0, bestRun.Collisions ?? 0);
-		BuildCollisionReplayIndices();
-
 		BuildScaledReplayPoints();
+
+		var touches = await db.CollisionPoints
+			.Where(c => c.GameRunId == bestRun.Id)
+			.OrderBy(c => c.TimeStamp)
+			.ToListAsync();
+		BuildCollisionReplayIndices(touches);
 		IsReplayRunning = false;
 		ReplayDotX = null;
 		ReplayDotY = null;
 		IsCollisionFrame = false;
 
+		var label = best ? "Best run" : "Last run";
 		ReplayMessage = BestRunPositions.Count == 0
-			? $"Best run #{bestRun.Id} found, but without position data."
-			: $"Best run #{bestRun.Id} loaded ({BestRunPositions.Count} points).";
+			? $"{label} #{bestRun.Id} found, but without position data (was the camera running?)."
+			: $"{label} #{bestRun.Id}: {bestRun.Duration:0.00} s, {bestRun.Collisions ?? 0} errors" +
+			  (touches.Count > 0 ? " – red X = where the wire was touched." : ".");
 	}
 
 	private async Task StartReplayAsync()
@@ -336,21 +398,35 @@ else
 		}
 	}
 
-	private void BuildCollisionReplayIndices()
+	// Red X on the track for every real wire touch
+	private List<(double X, double Y)> CollisionMarkers = [];
+
+	// Real touches: each one is placed at the replay point closest in time,
+	// so the replay dot flashes red exactly when the wire was touched.
+	private void BuildCollisionReplayIndices(List<CollisionPoint> touches)
 	{
 		CollisionReplayIndices.Clear();
+		CollisionMarkers.Clear();
 
-		if (ReplayCollisionCount <= 0 || BestRunPositions.Count < 2)
+		if (BestRunPositions.Count < 2 || ScaledReplayPoints.Count != BestRunPositions.Count)
 		{
 			return;
 		}
 
-		var maxIndex = BestRunPositions.Count - 1;
-		for (var hit = 1; hit <= ReplayCollisionCount; hit++)
+		foreach (var touch in touches)
 		{
-			var mappedIndex = (int)Math.Round((double)hit / (ReplayCollisionCount + 1) * maxIndex);
-			mappedIndex = Math.Clamp(mappedIndex, 1, maxIndex);
-			CollisionReplayIndices.Add(mappedIndex);
+			var index = 0;
+			for (var i = 1; i < BestRunPositions.Count; i++)
+			{
+				if ((BestRunPositions[i].TimeStamp - touch.TimeStamp).Duration() <
+					(BestRunPositions[index].TimeStamp - touch.TimeStamp).Duration())
+				{
+					index = i;
+				}
+			}
+
+			CollisionReplayIndices.Add(index);
+			CollisionMarkers.Add(ScaledReplayPoints[index]);
 		}
 	}
 
@@ -359,78 +435,72 @@ else
 		ReplayCts?.Cancel();
 	}
 
-	private void BuildScaledPoints()
+	// Scale + offset so that the track AND the loaded run fit into the picture
+	private double MinX, MaxX, MinY, Scale, OffsetX, OffsetY;
+
+	// Cleaned camera points (before scaling)
+	private List<(double X, double Y)> CleanContour = [];
+	private List<(double X, double Y)> CleanReplay = [];
+
+	// Camera pixel -> SVG point. The camera looks at the course from the front,
+	// so left/right is mirrored back (MaxX - x). Camera y grows downwards like SVG.
+	private (double X, double Y) ToSvg((double X, double Y) p)
 	{
-		ScaledPoints.Clear();
+		var x = OffsetX + (MaxX - p.X) * Scale;
+		var y = OffsetY + (p.Y - MinY) * Scale;
+		return (x, y);
+	}
 
-		if (Calibration is null || Calibration.Points.Count == 0)
-			return;
+	// Fit all points (track + replay) into the SVG and scale both lines again
+	private void UpdateScale()
+	{
+		var all = CleanContour.Concat(CleanReplay).ToList();
+		if (all.Count == 0) return;
 
-		var ordered = Calibration.Points
-			.OrderBy(p => p.Timestamp)
-			.ToList();
+		MinX = all.Min(p => p.X);
+		MaxX = all.Max(p => p.X);
+		MinY = all.Min(p => p.Y);
+		var maxY = all.Max(p => p.Y);
 
-		// Keep the contour in real capture order (timestamp),
-		// so replay data aligns with the displayed calibration path.
-		var minX = ordered.Min(p => p.X);
-		var maxX = ordered.Max(p => p.X);
-		var minY = ordered.Min(p => p.Y);
-		var maxY = ordered.Max(p => p.Y);
-
-		var srcWidth = Math.Max(1, maxX - minX);
-		var srcHeight = Math.Max(1, maxY - minY);
+		var srcWidth = Math.Max(1, MaxX - MinX);
+		var srcHeight = Math.Max(1, maxY - MinY);
 
 		var targetWidth = SvgWidth - (2 * Padding);
 		var targetHeight = SvgHeight - (2 * Padding);
 
-		var scale = Math.Min(targetWidth / srcWidth, targetHeight / srcHeight);
+		Scale = Math.Min(targetWidth / srcWidth, targetHeight / srcHeight);
+		OffsetX = (SvgWidth - srcWidth * Scale) / 2.0;
+		OffsetY = (SvgHeight - srcHeight * Scale) / 2.0;
 
-		var drawWidth = srcWidth * scale;
-		var drawHeight = srcHeight * scale;
+		ScaledPoints = CleanContour.Select(ToSvg).ToList();
+		ScaledReplayPoints = CleanReplay.Select(ToSvg).ToList();
+	}
 
-		var offsetX = (SvgWidth - drawWidth) / 2.0;
-		var offsetY = (SvgHeight - drawHeight) / 2.0;
+	private void BuildScaledPoints()
+	{
+		CleanContour = [];
 
-		foreach (var p in ordered)
+		if (Calibration is not null && Calibration.Points.Count > 0)
 		{
-			var x = offsetX + (p.X - minX) * scale;
-			var y = SvgHeight - (offsetY + (p.Y - minY) * scale);
-
-			ScaledPoints.Add((x, y));
+			// Keep the contour in real capture order (timestamp), then remove outliers and smooth
+			CleanContour = TrackSmoothing.Clean(Calibration.Points
+				.OrderBy(p => p.Timestamp)
+				.Select(p => (p.X, p.Y))
+				.ToList());
 		}
+
+		UpdateScale();
 	}
 
 	private void BuildScaledReplayPoints()
 	{
-		ScaledReplayPoints.Clear();
+		// Same cleaning as the contour; the point count stays the same,
+		// so replay timing and collision frames still fit
+		CleanReplay = BestRunPositions.Count == 0 ? [] : TrackSmoothing.Clean(BestRunPositions
+			.Select(p => ((double)p.X, (double)p.Y))
+			.ToList());
 
-		if (Calibration is null || Calibration.Points.Count == 0 || BestRunPositions.Count == 0)
-			return;
-
-		var minX = Calibration.Points.Min(p => p.X);
-		var maxX = Calibration.Points.Max(p => p.X);
-		var minY = Calibration.Points.Min(p => p.Y);
-		var maxY = Calibration.Points.Max(p => p.Y);
-
-		var srcWidth = Math.Max(1, maxX - minX);
-		var srcHeight = Math.Max(1, maxY - minY);
-
-		var targetWidth = SvgWidth - (2 * Padding);
-		var targetHeight = SvgHeight - (2 * Padding);
-
-		var scale = Math.Min(targetWidth / srcWidth, targetHeight / srcHeight);
-		var drawWidth = srcWidth * scale;
-		var drawHeight = srcHeight * scale;
-
-		var offsetX = (SvgWidth - drawWidth) / 2.0;
-		var offsetY = (SvgHeight - drawHeight) / 2.0;
-
-		foreach (var p in BestRunPositions)
-		{
-			var x = offsetX + (p.X - minX) * scale;
-			var y = SvgHeight - (offsetY + (p.Y - minY) * scale);
-			ScaledReplayPoints.Add((x, y));
-		}
+		UpdateScale();
 	}
 
 	private sealed class CalibrationData

@@ -14,6 +14,8 @@ typedef enum {
 /* Called by wifi.c once the ESP has an IP address */
 void mqtt_start(void);
 
-/* Sends one game event as JSON to MQTT_GAME_TOPIC.
-   rfid_tag may be "" if no player is known. */
-void mqtt_send_event(game_event_t event, const char *rfid_tag);
+/* Sends one game event as JSON to MQTT_GAME_TOPIC */
+void mqtt_send_event(game_event_t event);
+
+/* Sends a scanned card number as JSON to MQTT_RFID_TOPIC */
+void mqtt_send_rfid(const char *number);

@@ -74,9 +74,10 @@ public sealed class MqttIngestionService : BackgroundService
                     await _client.SubscribeAsync(new MqttClientSubscribeOptionsBuilder()
                         .WithTopicFilter(f => f.WithTopic(c.PositionTopic).WithQualityOfServiceLevel(MqttQualityOfServiceLevel.AtMostOnce))
                         .WithTopicFilter(f => f.WithTopic(c.GameTopic).WithQualityOfServiceLevel(MqttQualityOfServiceLevel.AtMostOnce))
+                        .WithTopicFilter(f => f.WithTopic(c.RfidTopic).WithQualityOfServiceLevel(MqttQualityOfServiceLevel.AtMostOnce))
                         .Build(), stoppingToken);
 
-                    _logger.LogInformation("Subscribed to topics: {PositionTopic}, {GameTopic}", c.PositionTopic, c.GameTopic);
+                    _logger.LogInformation("Subscribed to topics: {PositionTopic}, {GameTopic}, {RfidTopic}", c.PositionTopic, c.GameTopic, c.RfidTopic);
                 }
             }
             catch (Exception ex)
@@ -116,6 +117,14 @@ public sealed class MqttIngestionService : BackgroundService
                 {
                     if (msg.TimestampUtc == default) msg.TimestampUtc = DateTime.UtcNow;
                     await coordinator.HandleGameEventAsync(msg);
+                }
+            }
+            else if (topic == c.RfidTopic)
+            {
+                var msg = JsonSerializer.Deserialize<RfidMessage>(payload, jsonOptions);
+                if (msg is not null)
+                {
+                    await coordinator.HandleRfidAsync(msg);
                 }
             }
         }

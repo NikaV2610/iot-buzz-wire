@@ -1,4 +1,5 @@
 #include "wifi.h"
+#include <stdbool.h>
 #include "config.h"
 #include "mqtt.h"
 
@@ -9,14 +10,20 @@
 
 static const char *TAG = "wifi";
 
+static bool warned = false;   /* print "no WiFi" only once, not every retry */
+
 static void wifi_event_handler(void *arg, esp_event_base_t base, int32_t event_id, void *event_data)
 {
     if (base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
     } else if (base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        ESP_LOGW(TAG, "WiFi disconnected, retrying");
+        if (!warned) {
+            ESP_LOGW(TAG, "No WiFi connection, retrying in the background");
+            warned = true;
+        }
         esp_wifi_connect();
     } else if (base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        warned = false;
         ESP_LOGI(TAG, "WiFi connected, got IP");
         mqtt_start();
     }

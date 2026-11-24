@@ -16,14 +16,36 @@
 }
 
 .top-row {
-    min-height: 3.5rem;
-    background-color: rgba(0,0,0,0.4);
+    min-height: 4rem;
+    background-color: rgba(0,0,0,0.25);
 }
 
 .navbar-brand {
-    font-size: 1rem;
-    font-weight: 700;
+    font-size: 1.15rem;
+    font-weight: 800;
     letter-spacing: .02em;
+    color: #fff !important;
+    text-decoration: none;
+}
+
+.brand-mark {
+    display: inline-grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    margin-right: .4rem;
+    border-radius: 10px;
+    background: #e5484d;
+    font-size: 1rem;
+}
+
+.nav-section {
+    margin-top: 1.25rem;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .45);
 }
 
 .bi {
@@ -83,7 +105,8 @@
 
     .nav-item ::deep a {
         color: #e8eef8;
-        border-radius: 8px;
+        text-decoration: none;
+        border-radius: 10px;
         height: 2.75rem;
         display: flex;
         align-items: center;

@@ -7,6 +7,7 @@ public sealed class MqttOptions
     public string ClientId { get; set; } = "hotwire-web";
     public string PositionTopic { get; set; } = "hotwire/position";
     public string GameTopic { get; set; } = "hotwire/game";
+    public string RfidTopic { get; set; } = "hotwire/rfid";
 
     public string? Username { get; set; }
     public string? Password { get; set; }

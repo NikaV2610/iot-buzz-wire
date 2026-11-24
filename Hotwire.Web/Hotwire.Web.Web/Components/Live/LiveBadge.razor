@@ -1,0 +1,30 @@
+@* Small status chip for the top bar, visible on every page *@
+@implements IDisposable
+@inject LiveGameState Live
+@inject CalibrationStateService Calibration
+
+<a class="live-badge @CssClass" href="">
+    <span class="live-badge-dot"></span>
+    @Text
+</a>
+
+@code {
+    private string Text =>
+        Calibration.IsRecording ? "Calibrating" :
+        Live.IsRunActive ? $"Run · {Live.CollisionCount} errors" :
+        Live.CurrentPlayerName is not null ? $"Ready · {Live.CurrentPlayerName}" :
+        Live.CurrentRfid is not null ? $"Unknown card {Live.CurrentRfid}" :
+        Live.WaitingForCard ? "Waiting for card" :
+        "Idle";
+
+    private string CssClass =>
+        Calibration.IsRecording ? "is-calibrating" :
+        Live.IsRunActive ? "is-running" :
+        Live.CurrentRfid is not null ? "is-ready" : "is-idle";
+
+    protected override void OnInitialized() => Live.Changed += OnChanged;
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Live.Changed -= OnChanged;
+}

@@ -1,6 +1,8 @@
 @page "/players"
 
 @inject IDbContextFactory<GameDbContext> DbFactory
+@inject LiveGameState Live
+@implements IDisposable
 
 @using Hotwire.Web.Web.Data
 @using Hotwire.Web.Web.Models
@@ -9,6 +11,33 @@
 <div class="page-header">
     <h1 class="page-title">Players</h1>
     <p class="page-subtitle">Manage player identities and RFID assignments.</p>
+</div>
+
+@* Last scanned card (live, from the RFID topic) *@
+<div class="scan-banner @ScanClass mb-3">
+    <span class="scan-icon">💳</span>
+    <div class="scan-text">
+        @if (Live.WaitingForCard)
+        {
+            <b>Waiting for a card…</b>
+            <span>Hold the card to the reader.</span>
+        }
+        else if (Live.CurrentRfid is null)
+        {
+            <b>No card scanned yet</b>
+            <span>Press the red button and hold a card to the reader.</span>
+        }
+        else if (ScannedOwner is not null)
+        {
+            <b>Card @Live.CurrentRfid belongs to @ScannedOwner.FirstName @ScannedOwner.LastName</b>
+            <span>This player plays the next run. The row is marked in the list below.</span>
+        }
+        else
+        {
+            <b>Card @Live.CurrentRfid is not assigned yet</b>
+            <span>The RFID field below is filled in – enter a name and save.</span>
+        }
+    </div>
 </div>
 
 <div class="surface-card mb-3">
@@ -60,7 +89,7 @@ else
             <tbody>
                 @foreach (var p in AllPlayers)
                 {
-                    <tr>
+                    <tr class="@(IsScanned(p) ? "row-scanned" : "")">
                         <td>@p.Id</td>
                         <td>@p.FirstName @p.LastName</td>
                         <td>@p.RfidTag</td>
@@ -132,10 +161,52 @@ else
     private int? ReactivationPlayerId;
     private string ReactivationRfid = "";
 
+    private string? _shownKey;   // card + waiting state that is currently shown in the banner
+    private string CardKey => $"{Live.CurrentRfid}|{Live.WaitingForCard}";
+
+    // Active player with the scanned card (null = unknown card)
+    private Player? ScannedOwner => Live.CurrentRfid is null ? null :
+        AllPlayers.FirstOrDefault(p => p.IsActive && Normalize(p.RfidTag) == Live.CurrentRfid);
+
+    private bool IsScanned(Player p) => ScannedOwner?.Id == p.Id;
+
+    private string ScanClass =>
+        Live.CurrentRfid is null ? "is-empty" : ScannedOwner is null ? "is-unknown" : "is-known";
+
+    private static string? Normalize(string? rfid) =>
+        string.IsNullOrWhiteSpace(rfid) ? null : rfid.Replace(" ", "").ToUpper();
+
     protected override async Task OnInitializedAsync()
     {
         await LoadPlayersAsync();
+        OnCardChanged();
+        Live.Changed += OnLiveChanged;
     }
+
+    // Live.Changed also fires 10x per second for camera positions:
+    // only redraw when the scanned card really changed
+    private void OnLiveChanged()
+    {
+        if (CardKey == _shownKey) return;
+        _ = InvokeAsync(() =>
+        {
+            OnCardChanged();
+            StateHasChanged();
+        });
+    }
+
+    private void OnCardChanged()
+    {
+        _shownKey = CardKey;
+
+        // Unknown card: fill in the RFID field for a new player
+        if (Live.CurrentRfid is not null && ScannedOwner is null && string.IsNullOrWhiteSpace(NewPlayer.RfidTag))
+        {
+            NewPlayer.RfidTag = Live.CurrentRfid;
+        }
+    }
+
+    public void Dispose() => Live.Changed -= OnLiveChanged;
 
     private async Task LoadPlayersAsync()
     {
@@ -151,9 +222,7 @@ else
         await using var tx = await db.Database.BeginTransactionAsync();
 
         // Normalize RFID
-        var normalizedRfid = string.IsNullOrWhiteSpace(NewPlayer.RfidTag)
-            ? null
-            : NewPlayer.RfidTag.Trim();
+        var normalizedRfid = Normalize(NewPlayer.RfidTag);
 
         // If RFID exists, find previous owners and deactivate them
         if (!string.IsNullOrEmpty(normalizedRfid))
@@ -202,6 +271,12 @@ else
         };
 
         await LoadPlayersAsync();
+
+        // Player for the scanned card was just created: show the name in the live view
+        if (normalizedRfid is not null && normalizedRfid == Live.CurrentRfid)
+        {
+            Live.SetRfid(normalizedRfid, $"{playerToCreate.FirstName} {playerToCreate.LastName}");
+        }
     }
 
     private async Task DeletePlayerAsync(int id)

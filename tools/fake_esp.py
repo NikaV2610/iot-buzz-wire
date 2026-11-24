@@ -14,10 +14,11 @@ import paho.mqtt.client as mqtt
 
 BROKER = "broker.emqx.io"
 PORT = 1883
-TOPIC = "hotwire/iot-buzz-wire/test/game"   # same as the ESP and the web app
+TOPIC = "hotwire/iot-buzz-wire/test/game"        # same as the ESP and the web app
+RFID_TOPIC = "hotwire/iot-buzz-wire/test/rfid"
 
 # Event numbers (same as GameEventType in the web app)
-START, STOP, COLLISION, RFID_ASSIGNED = 0, 1, 2, 4
+START, STOP, COLLISION, NEW_PLAYER = 0, 1, 2, 3
 
 rfid_tag = sys.argv[1] if len(sys.argv) > 1 else "12345"
 collisions = int(sys.argv[2]) if len(sys.argv) > 2 else 3
@@ -28,17 +29,17 @@ client.loop_start()
 
 
 def send(event_type, wait_s):
-    message = json.dumps({
-        "deviceId": "buzzwire-esp32c3",
-        "eventType": event_type,
-        "rfidTag": rfid_tag,
-    })
+    message = json.dumps({"deviceId": "buzzwire-esp32c3", "eventType": event_type})
     client.publish(TOPIC, message, qos=1).wait_for_publish()
     print("sent", message)
     time.sleep(wait_s)
 
 
-send(RFID_ASSIGNED, 1)    # card scanned
+send(NEW_PLAYER, 0.5)     # red button
+card = json.dumps({"deviceId": "buzzwire-esp32c3", "number": rfid_tag})
+client.publish(RFID_TOPIC, card, qos=1).wait_for_publish()   # card scanned
+print("sent", card)
+time.sleep(1)
 send(START, 1)            # start contact
 for _ in range(collisions):
     send(COLLISION, 0.8)  # wire touched
