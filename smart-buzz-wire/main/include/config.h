@@ -6,8 +6,8 @@
 /* ============================================================
    WiFi / MQTT (must match the web app: Hotwire.Web appsettings.json)
    ============================================================ */
-#define WIFI_SSID       "YOUR_SSID"
-#define WIFI_PASS       "YOUR_PASSWORD"
+#define WIFI_SSID       "Andis Handy"
+#define WIFI_PASS       "98761234"
 
 #define MQTT_URI        "mqtt://broker.emqx.io:1883"
 #define MQTT_GAME_TOPIC "hotwire/iot-buzz-wire/test/game"
